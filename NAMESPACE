@@ -18,3 +18,7 @@ importFrom(dplyr,"ends_with")
 importFrom(dplyr,"select")
 importFrom(tidyr,"pivot_longer")
 importFrom(tidyr,'gather')
+<<<<<<< HEAD
+=======
+
+>>>>>>> 132d9c85b98bebd815b7f45d6d2d7f74f716b702
