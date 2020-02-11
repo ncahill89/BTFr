@@ -41,6 +41,9 @@ sort_core <- function(core_dat, species_names) {
 
     # Sort the core data based on the modern species order
     if (any(is.na(species_match))) {
+        message("These species appear in the modern but do not appear in the core: \n",paste(species_names[which(is.na(species_match))], collapse = " "), "\nThe model will assume that these species have zero counts.\n", "Check your data and modify if needed, otherwise continue.")
+        readline(prompt="Press [enter] to continue")
+
         species_add <- species_names[which(is.na(species_match))]
         names_core <- names(core_dat)
         col_add <- matrix(0, nrow = dim(core_dat)[1], ncol = length(species_add))

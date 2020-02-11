@@ -12,9 +12,9 @@
 #'
 #' @return Output will be saved to \code{output.dir}
 #' @export
-#' @import R2jags rjags foreach doParallel
+#' @import R2jags rjags
 #' @importFrom dplyr "select" "ends_with"
-#'@importFrom tidyr "pivot_longer"
+#' @importFrom tidyr "pivot_longer"
 #' @examples
 #' coremodel<-runcore(core_counts.csv = "core_counts.csv")
 run_core<-function(  obj,
@@ -24,7 +24,6 @@ run_core<-function(  obj,
                     n.iter=20000,
                     n.burnin=5000,
                     n.thin=10,
-                    run.on.server = FALSE,
                     use.informative.priors=FALSE,
                     validation.run=FALSE,
                     fold=1)
@@ -136,19 +135,7 @@ run_core<-function(  obj,
             emax=emax,
             el_mean=el_mean)
 
-  if (run.on.server) {
-    foreach(chainNum=ChainNums) %dopar% {
-      cat(paste("Start chain ID ", chainNum), "\n")
-
-      InternalRunCore(chainNum = chainNum,
-                      jags_data = data,
-                      jags_pars = pars,
-                      n.burnin = n.burnin,
-                      n.iter = n.iter,
-                      n.thin = n.thin)
-    } # end chainNums
-  } else {
-    for (chainNum in ChainNums){
+   for (chainNum in ChainNums){
       cat(paste("Start chain ID ", chainNum), "\n")
 
       InternalRunCore(chainNum = chainNum,
@@ -159,7 +146,6 @@ run_core<-function(  obj,
                       n.thin = n.thin)
 
     }
-  }
 
   data[["depth"]] <- depth
   #Store MCMC output in an array

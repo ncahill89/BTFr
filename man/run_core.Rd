@@ -12,7 +12,6 @@ run_core(
   n.iter = 20000,
   n.burnin = 5000,
   n.thin = 10,
-  run.on.server = FALSE,
   use.informative.priors = FALSE,
   validation.run = FALSE,
   fold = 1
@@ -33,9 +32,9 @@ run_core(
 
 \item{n.thin}{The number of thinning}
 
-\item{run.on.server}{Set to TRUE for running chains in parallel on a server}
-
 \item{use.informative.priors}{Set to TRUE if prior information is available}
+
+\item{run.on.server}{Set to TRUE for running chains in parallel on a server}
 }
 \value{
 Output will be saved to \code{output.dir}

@@ -12,7 +12,7 @@
 #'
 #' @return Nothing is returned, the relevant data will be saved.
 #' @export
-#' @import R2jags rjags foreach doParallel readr
+#' @import R2jags rjags readr
 #'
 #' @examples
 #' run_modern(modern_elevation.csv = 'elevation.csv',
@@ -22,8 +22,8 @@
 #' n.burnin = 1)
 
 run_modern <- function(modern_elevation.csv = NULL, modern_counts.csv = NULL,
-    dx = 0.2, ChainNums = seq(1, 3), n.iter = 70000, n.burnin = 20000,
-    n.thin = 30, run.on.server = FALSE, validation.run = FALSE, fold = 1) {
+    dx = 0.2, ChainNums = seq(1, 3), n.iter = 40000, n.burnin = 10000,
+    n.thin = 15, validation.run = FALSE, fold = 1) {
 
     dir.create(file.path(getwd(), "temp.JAGSobjects"), showWarnings = FALSE)
 
@@ -98,15 +98,7 @@ run_modern <- function(modern_elevation.csv = NULL, modern_counts.csv = NULL,
     data = list(y = y, n = nrow(y), m = ncol(y), N_count = N_count, H = H,
         Z.ih = Z.ih, Zstar.ih = Zstar.ih, N_grid = grid_size, begin0 = begin0)
 
-    if (run.on.server) {
-        foreach(chainNum = ChainNums) %dopar% {
-            cat(paste("Start chain ID ", chainNum), "\n")
 
-            InternalRunOneChain(chainNum = chainNum, jags.data = data,
-                jags.pars = pars, n.burnin = n.burnin, n.iter = n.iter,
-                n.thin = n.thin)
-        }  # end chainNums
-    } else {
         for (chainNum in ChainNums) {
             cat(paste("Start chain ID ", chainNum), "\n")
 
@@ -115,7 +107,7 @@ run_modern <- function(modern_elevation.csv = NULL, modern_counts.csv = NULL,
                 n.thin = n.thin)
 
         }
-    }
+
 
     # Get model output needed for the core run
     data[["x"]] <- x
@@ -325,11 +317,11 @@ internal_get_core_input <- function(ChainNums, jags_data)
   colnames(df_high) = c("SWLI", species_names)
 
 
-  df_long = df %>% pivot_longer(names_to = "taxa", values_to = "proportion",
+  df_long = df %>% pivot_longer(names_to = "species", values_to = "proportion",
                                 -SWLI)
-  df_low_long = df_low %>% pivot_longer(names_to = "taxa", values_to = "proportion_lwr",
+  df_low_long = df_low %>% pivot_longer(names_to = "species", values_to = "proportion_lwr",
                                         -SWLI)
-  df_high_long = df_high %>% pivot_longer(names_to = "taxa", values_to = "proportion_upr",
+  df_high_long = df_high %>% pivot_longer(names_to = "species", values_to = "proportion_upr",
                                           -SWLI)
 
 

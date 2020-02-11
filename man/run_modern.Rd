@@ -9,10 +9,9 @@ run_modern(
   modern_counts.csv = NULL,
   dx = 0.2,
   ChainNums = seq(1, 3),
-  n.iter = 70000,
-  n.burnin = 20000,
-  n.thin = 30,
-  run.on.server = FALSE,
+  n.iter = 40000,
+  n.burnin = 10000,
+  n.thin = 15,
   validation.run = FALSE,
   fold = 1
 )
