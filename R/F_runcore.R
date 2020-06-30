@@ -17,25 +17,27 @@
 #' @importFrom tidyr "pivot_longer"
 #' @examples
 #' coremodel<-runcore(core_counts.csv = "core_counts.csv")
-run_core<-function(  obj,
-                    core_counts.csv = NULL,
+run_core<-function( obj,
+                    core_counts = NULL,
+                    prior_el = NULL,
                     dx=0.2,
                     ChainNums = seq(1,3),
-                    n.iter=20000,
-                    n.burnin=5000,
-                    n.thin=10,
-                    use.informative.priors=FALSE,
+                    n.iter=15000,
+                    n.burnin=1000,
+                    n.thin=7,
                     validation.run=FALSE,
-                    fold=1)
+                    fold=1,
+                    use_uniform_prior = FALSE)
 {
 
 
   dir.create(file.path(getwd(), "temp.JAGSobjects"),showWarnings = FALSE)
 
   # read in the core data
-  if (!is.null(core_counts.csv)) {
-    core_dat <- read_csv(core_counts.csv)
+  if (!is.null(core_counts)) {
+    core_dat <- core_counts
   } else core_dat <- BTF::core_counts
+
 
   if(!validation.run)
     {
@@ -52,15 +54,12 @@ run_core<-function(  obj,
   }
 
   #Check if data includes priors
-  if(any(grepl("emin",colnames(core_dat))))
+  if(!is.null(prior_el))
   {
-  prior_emin<-pmax(obj$elevation_min, as.vector(t(select(core_dat,ends_with("min"))/100)))
-  prior_emax<-pmin(obj$elevation_max,as.vector(t(select(core_dat,ends_with("max"))/100)))
-  }
-
-  if(!any(grepl("emin",colnames(core_dat)))&use.informative.priors==TRUE)
-  {
-  stop("Not enough information to do a run with informative priors")
+  use.informative.priors = TRUE
+  prior_emin <- pmax(obj$elevation_min,prior_el$prior_lwr/100)
+  prior_emax <- pmin(obj$elevation_max, prior_el$prior_upr/100)
+  cat("Running with informative priors")
   }
 
   #Get other relevant info for the model
@@ -86,13 +85,13 @@ run_core<-function(  obj,
   n0<-nrow(y0)
   m0<-ncol(y0)
 
-  if(!use.informative.priors)
+  if(is.null(prior_el))
   {
     emin=rep(obj$elevation_min ,n0)
     emax=rep(obj$elevation_max ,n0)
   }
 
-  if(use.informative.priors)
+  if(!is.null(prior_el))
   {
     emin=prior_emin
     emax=prior_emax
@@ -130,10 +129,13 @@ run_core<-function(  obj,
             beta0_sd = obj$beta0_sd,
             delta0.hj= obj$delta0.hj,
             delta0_sd = obj$delta0_sd,
+            alpha0 = obj$alpha0,
+            alpha0_sd = obj$alpha0_sd,
             sigma.z = obj$sigma.z,
             emin=emin,
             emax=emax,
-            el_mean=el_mean)
+            el_mean=el_mean,
+            use_uniform_prior = use_uniform_prior)
 
    for (chainNum in ChainNums){
       cat(paste("Start chain ID ", chainNum), "\n")
@@ -150,7 +152,7 @@ run_core<-function(  obj,
   data[["depth"]] <- depth
   #Store MCMC output in an array
   get_core_out <- internal_get_core_output(ChainNums = ChainNums, jags_data = data)
-  core_out <- list(SWLI = get_core_out$SWLI)
+  core_out <- list(SWLI = get_core_out$SWLI, mcmc.array=get_core_out$x0.samps)
   #Get parameter diagnostics (for SWLI estimates)
   # get_diagnostics(n=nrow(y0),
   #                 output.dir = output.dir,
@@ -184,10 +186,15 @@ InternalRunCore <- function(#Do MCMC sampling
   temp <- rnorm(1)
 
   #The model for the modern data
-  coremodel_v1="
-  model
-  {
-
+cat("
+#--------------------------------------------------------------
+# Model for BTF
+# Niamh Cahill 2020
+#--------------------------------------------------------------
+    
+model{",sep="",append=FALSE, file = file.path("model.txt"), fill = TRUE) 
+  
+  cat("
   for(i in 1:n)
   {
 
@@ -199,13 +206,13 @@ InternalRunCore <- function(#Do MCMC sampling
   }
 
   for(j in begin0:m){
-  lambda[i,j]<-1
+  lambda[i,j] <- 1
   }
   for(j in 1:(begin0-1)){
-  spline[i,j]<- beta0.j[j] + inprod(Z0.ih[i,],delta0.hj[,j])
+  spline[i,j]<- alpha0 + beta0.j[j] + inprod(Z0.ih[i,],delta0.hj[,j])
 
   ##Account for over/under dispersion
-  z[i,j]~dnorm(spline[i,j],tau_z[j])
+  z[i,j] ~ dnorm(spline[i,j],tau_z[j])
   lambda[i,j]<-exp(z[i,j])
   }#End j loop
 
@@ -215,16 +222,6 @@ InternalRunCore <- function(#Do MCMC sampling
   for(j in 1:m){
   p[i,j]<-lambda[i,j]/lambdaplus[i]
   }#End j loop
-
-  #Prior for x0
-  #x0[i]~dt(el_mean,1,1)T(emin[i],emax[i])
-
-  #Prior for x0
-   x0[i]~dnorm(x0.mean[i],sd.x0[i]^-2)
-   x0.mean[i]~dt(el_mean,1,1)T(emin[i],emax[i])
-   #x0[i]~dunif(emin[i],emax[i])
-   sd.x0[i] <- 0.1
-
   }#End i loop
 
   #Get basis functions
@@ -235,21 +232,53 @@ InternalRunCore <- function(#Do MCMC sampling
   for(j in 1:(begin0-1))
   {
   #Over dispersion parameter
-  tau_z[j]<-1/(pow(sigma.z[j],2)+pow(beta0_sd[j],2)+pow(delta0_sd[j],2))
+  # tau_z[j]<-1/(pow(sigma.z[j],2) +
+  #              pow(beta0_sd[j],2) + 
+  #              pow(alpha0_sd,2) + 
+  #              pow(delta0_sd[j],2))
+  
+   tau_z[j]<-1/(pow(sigma.z[j],2))
+
   }
-
-  }##End model
-  "
-
-  mod<-jags(data=jags_data,
+  ",sep = "",append = TRUE, file = "model.txt",fill = TRUE)
+  
+  if(jags_data$use_uniform_prior == TRUE)
+  {
+  cat("
+    for(i in 1:n)
+    {
+    #Prior for x0
+    x0[i]~dunif(emin[i],emax[i])
+    }
+    ", sep = "", append = TRUE, file = "model.txt",fill = TRUE)
+  }
+  
+  if(jags_data$use_uniform_prior == FALSE)
+  {
+    cat(
+    "
+    for(i in 1:n)
+    {
+    #Prior for x0
+      x0[i]~dnorm(x0.mean[i],sd.x0[i]^-2)
+      x0.mean[i]~dt(el_mean,1,1)T(emin[i],emax[i])
+      sd.x0[i] <- 0.1
+    }
+    ",sep = "", append = TRUE,  file = "model.txt",fill = TRUE)
+  }
+        
+  cat("}"
+      ,sep = "", append = TRUE, file = "model.txt",fill = TRUE)
+  
+  mod <- suppressWarnings(jags(data=jags_data,
             parameters.to.save=jags_pars,
-            model.file=textConnection(coremodel_v1),
+            model.file = "model.txt",
             n.chains=1,
             n.iter=n.iter,
             n.burnin=n.burnin,
             n.thin=n.thin,
             DIC=FALSE,
-            jags.seed = set.seed.chain)
+            jags.seed = set.seed.chain))
 
   mod_upd <- mod
   save(mod_upd, file=file.path(getwd(), "temp.JAGSobjects", paste0("jags_mod", chainNum, ".Rdata")))
@@ -262,13 +291,31 @@ internal_get_core_output <- function(ChainNums, jags_data)
 {
 
   mcmc.array <- ConstructMCMCArray(ChainIDs = ChainNums)
-
+  n <- jags_data$n
+  
+  pars.check<-rep(NA,n)
+  for(i in 1:n)
+    pars.check[i]<-paste0("x0[",i,"]")
+  
+  
+  # Get gelman diagnostics (Rhat threshold = 1.1)
+  # If gelman diagnostic fails then stop!
+  gd<-gr_diag(mcmc.array,pars.check = pars.check)
+  if(gd==-1)
+  {
+    cat("WARNING! Convergence issues, check trace plots \n")
+  }
+  # If gelman diagnostic passes then get other diagnostics  
+  if(gd==0)
+  {
+    eff_size(mcmc.array,pars.check = pars.check)
+    mcse(mcmc.array,pars.check = pars.check)
+  }
+  
   n_samps<-dim(mcmc.array)[1]
 
   #Get the sorted core data
   Depth<-jags_data$depth
-  n <- jags_data$n
-
   x0.samps<-array(NA,c(n_samps,n))
 
   for(i in 1:n)
@@ -285,6 +332,6 @@ internal_get_core_output <- function(ChainNums, jags_data)
   sigma<-(upper-lower)/4
   SWLI_data<-cbind(Depth,SWLI,sigma,lower,upper)
 
-  return(list(SWLI = SWLI_data))
+  return(list(SWLI = SWLI_data,x0.samps=x0.samps))
 }
 

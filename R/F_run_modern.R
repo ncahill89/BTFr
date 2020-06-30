@@ -21,23 +21,30 @@
 #' n.thin = 1,
 #' n.burnin = 1)
 
-run_modern <- function(modern_elevation.csv = NULL, modern_counts.csv = NULL,
-    dx = 0.2, ChainNums = seq(1, 3), n.iter = 40000, n.burnin = 10000,
-    n.thin = 15, validation.run = FALSE, fold = 1) {
+run_modern <- function(modern_elevation = NULL,
+                       modern_counts = NULL,
+                       dx = 0.2,
+                       ChainNums = seq(1, 3),
+                       n.iter = 40000,
+                       n.burnin = 10000,
+                       n.thin = 15,
+                       validation.run = FALSE,
+                       sigma_z_priors = NULL,
+                       fold = 1) {
 
     dir.create(file.path(getwd(), "temp.JAGSobjects"), showWarnings = FALSE)
 
     # read in the modern data
-    if (!is.null(modern_counts.csv)) {
-        modern_dat <- read_csv(modern_counts.csv)
+    if (!is.null(modern_counts)) {
+        modern_dat <- modern_counts
     } else modern_dat <- BTF::modern_counts
 
     # Get the sorted (by species counts) modern data
     modern_data_sorted <- sort_modern(modern_dat)
 
     # read in the elevation data
-    if (!is.null(modern_elevation.csv)) {
-        elevation_dat <- read_csv(modern_elevation.csv)
+    if (!is.null(modern_elevation)) {
+        elevation_dat <- modern_elevation
     } else elevation_dat <- BTF::modern_elevation
 
     modern_elevation <- elevation_dat$SWLI
@@ -92,11 +99,30 @@ run_modern <- function(modern_elevation.csv = NULL, modern_counts.csv = NULL,
     Bstar.ik <- res_star$B
     Zstar.ih <- Bstar.ik %*% Deltacomb.kh
 
+    if(is.null(sigma_z_priors))
+    {
+      mean_sigma_z <- rep(0,ncol(y))
+      sd_sigma_z <- rep(2,ncol(y))
+    }
+    
+    if(!is.null(sigma_z_priors))
+    {
+      species_prior <- sigma_z_priors$species
+      mean_sigma_z <- rep(0,ncol(y))
+      sd_sigma_z <- rep(2,ncol(y))
+      
+      match_index <- match(species_names,species_prior)[1:length(species_prior)]
+      
+      mean_sigma_z[1:length(species_prior)] <- sigma_z_priors$mean_sigma_overall[match_index]
+      sd_sigma_z[1:length(species_prior)] <- sigma_z_priors$sd_sigma_overall[match_index]
+    }
+    
+      
     # Jags model data
-    pars = c("p", "beta.j", "sigma.z", "sigma.delta", "delta.hj", "splinestar")
+    pars = c("p","alpha", "beta.j", "sigma.z", "sigma.delta", "delta.hj", "splinestar")
 
     data = list(y = y, n = nrow(y), m = ncol(y), N_count = N_count, H = H,
-        Z.ih = Z.ih, Zstar.ih = Zstar.ih, N_grid = grid_size, begin0 = begin0)
+        Z.ih = Z.ih, Zstar.ih = Zstar.ih, N_grid = grid_size, begin0 = begin0,mean_sigma_z = mean_sigma_z, sd_sigma_z = sd_sigma_z)
 
 
         for (chainNum in ChainNums) {
@@ -111,15 +137,27 @@ run_modern <- function(modern_elevation.csv = NULL, modern_counts.csv = NULL,
 
     # Get model output needed for the core run
     data[["x"]] <- x
+    
     jags_data <- list(data = data, pars = pars, elevation_max = elevation_max,
                       elevation_min = elevation_min, dx = dx, species_names = species_names)
 
     core_input <- internal_get_core_input(ChainNums = ChainNums, jags_data = jags_data)
 
     # Update jags_data list
-    modern_out <- list(data = data, pars = pars, elevation_max = elevation_max,
-        elevation_min = elevation_min, dx = dx, species_names = species_names,
-        delta0.hj = core_input$delta0.hj, delta0_sd = core_input$delta0_sd, beta0.j = core_input$beta0.j, beta0_sd = core_input$beta0_sd, sigma.z = core_input$sigma.z, src_dat = core_input$src_dat)
+    modern_out <- list(data = data, 
+                       pars = pars, 
+                       elevation_max = elevation_max,
+                       elevation_min = elevation_min, 
+                       dx = dx, 
+                       species_names = species_names,
+                       delta0.hj = core_input$delta0.hj, 
+                       delta0_sd = core_input$delta0_sd, 
+                       beta0.j = core_input$beta0.j, 
+                       alpha0 = core_input$alpha0,
+                       alpha0_sd = core_input$alpha0_sd,
+                       beta0_sd = core_input$beta0_sd, 
+                       sigma.z = core_input$sigma.z, 
+                       src_dat = core_input$src_dat)
 
     class(modern_out) = 'BTF'
 
@@ -143,23 +181,22 @@ InternalRunOneChain <- function(chainNum, jags_data, jags_pars, n.burnin,
   for(i in 1:n)
   {
   for(j in begin0:m){
-  z[i,j] <- 0
-  lambda[i,j]<-exp(z[i,j])
+  lambda[i,j] <- 1
   }
   for(j in 1:(begin0-1)){
-  spline[i,j]<-beta.j[j]+inprod(Z.ih[i,],delta.hj[,j])
-  z[i,j]~dnorm(spline[i,j],tau.z[j])
-  lambda[i,j]<-exp(z[i,j])
+  spline[i,j] <- alpha + beta.j[j] + inprod(Z.ih[i,],delta.hj[,j])
+  z[i,j] ~ dnorm(spline[i,j],tau.z[j])
+  lambda[i,j] <- exp(z[i,j])
   }#End j loop
 
-  y[i,]~dmulti(p[i,],N_count[i])
-  lambdaplus[i]<-sum(lambda[i,])
+  y[i,] ~ dmulti(p[i,],N_count[i])
+  lambdaplus[i] <- sum(lambda[i,])
   }#End i loop
 
   ###Get p's for multinomial
   for(i in 1:n){
   for(j in 1:m){
-  p[i,j]<-lambda[i,j]/lambdaplus[i]
+  p[i,j] <- lambda[i,j]/lambdaplus[i]
   }#End j loop
   }#End i loop
 
@@ -179,12 +216,13 @@ InternalRunOneChain <- function(chainNum, jags_data, jags_pars, n.burnin,
   ###Variance parameter###
   for(j in 1:m){
   tau.z[j]<-pow(sigma.z[j],-2)
-  sigma.z[j]~dt(0, 2^-2, 1)T(0,)
+  sigma.z[j]~dt(mean_sigma_z[j], sd_sigma_z[j]^-2, 1)T(0,)
 
   ###Intercept (species specific)
-  beta.j[j]~dnorm(0,0.01)
+  beta.j[j] ~ dnorm(0,0.01)
   }
-
+  
+  alpha ~ dnorm(0,0.01)
   ########Get predictions
   for(i in 1:N_grid){
   for(j in begin0:m){
@@ -238,9 +276,10 @@ internal_get_core_input <- function(ChainNums, jags_data)
   Deltacomb.kh <- t(Delta.hk)%*%solve(Delta.hk%*%t(Delta.hk))
 
   ##########Get parameter estimates
-  delta.hj_samps<-array(NA,c(n_samps,jags_data$data$H,(begin0-1)))
-  beta.j_samps<-sigma.z_samps<-array(NA,c(n_samps,(begin0-1)))
-
+  delta.hj_samps <- array(NA,c(n_samps,jags_data$data$H,(begin0-1)))
+  beta.j_samps <- sigma.z_samps<-array(NA,c(n_samps,(begin0-1)))
+  alpha_samps <- rep(NA, n_samps)
+  
     for(j in 1:(begin0-1))
     {
       for(h in 1:jags_data$data$H)
@@ -252,14 +291,17 @@ internal_get_core_input <- function(ChainNums, jags_data)
       beta.j_samps[,j]<-mcmc.array[1:n_samps,sample(1,ChainNums),parname]
     }
 
-
+      
   for(j in 1:(begin0-1))
   {
     parname<-paste0("sigma.z[",j,"]")
     sigma.z_samps[,j]<-mcmc.array[1:n_samps,sample(1,ChainNums),parname]
   }
 
-
+  
+  parname <- paste0("alpha")
+  alpha_samps <- mcmc.array[1:n_samps,sample(1,ChainNums), parname]
+  
   delta0.hj<-apply(delta.hj_samps,2:3,mean)
   delta0_sd<-apply((apply(delta.hj_samps,2:3,sd)),2,median)
 
@@ -267,7 +309,10 @@ internal_get_core_input <- function(ChainNums, jags_data)
   beta0_sd<-apply(beta.j_samps,2,sd)
 
   sigma.z<-apply(sigma.z_samps,2,median)
-
+  
+  alpha0 <- mean(alpha_samps)
+  alpha0_sd <- sd(alpha_samps)
+  
   # Get model estimates
   # Data
   y <- jags_data$data$y
@@ -330,5 +375,12 @@ internal_get_core_input <- function(ChainNums, jags_data)
                                          dplyr::pull(proportion_upr))
 
 
- return(list(delta0.hj = delta0.hj, delta0_sd = delta0_sd, beta0.j = beta0.j, beta0_sd = beta0_sd, sigma.z = sigma.z, src_dat = src_dat))
+ return(list(delta0.hj = delta0.hj, 
+             delta0_sd = delta0_sd,
+             beta0.j = beta0.j, 
+             beta0_sd = beta0_sd, 
+             alpha0 = alpha0,
+             alpha0_sd = alpha0_sd,
+             sigma.z = sigma.z, 
+             src_dat = src_dat))
 }
