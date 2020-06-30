@@ -12,7 +12,7 @@
 #'
 #' @return Output will be saved to \code{output.dir}
 #' @export
-#' @import R2jags rjags
+#' @import R2jags rjags coda
 #' @importFrom dplyr "select" "ends_with"
 #' @importFrom tidyr "pivot_longer"
 #' @examples
