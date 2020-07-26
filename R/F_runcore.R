@@ -232,12 +232,12 @@ model{",sep="",append=FALSE, file = file.path("model.txt"), fill = TRUE)
   for(j in 1:(begin0-1))
   {
   #Over dispersion parameter
-  # tau_z[j]<-1/(pow(sigma.z[j],2) +
-  #              pow(beta0_sd[j],2) + 
-  #              pow(alpha0_sd,2) + 
-  #              pow(delta0_sd[j],2))
+   tau_z[j]<-1/(pow(sigma.z[j],2) +
+                pow(beta0_sd[j],2) + 
+                pow(alpha0_sd,2) + 
+                pow(delta0_sd[j],2))
   
-   tau_z[j]<-1/(pow(sigma.z[j],2))
+   #tau_z[j]<-1/(pow(sigma.z[j],2))
 
   }
   ",sep = "",append = TRUE, file = "model.txt",fill = TRUE)
