@@ -230,7 +230,7 @@ InternalRunOneChain <- function(chainNum, jags_data, jags_pars, n.burnin,
   lambdastar[i,j]<-exp(zstar[i,j])
   }
   for(j in 1:(begin0-1)){
-  splinestar[i,j] <- beta.j[j]+inprod(Zstar.ih[i,],delta.hj[,j])
+  splinestar[i,j] <- alpha + beta.j[j]+inprod(Zstar.ih[i,],delta.hj[,j])
   zstar[i,j] ~ dnorm(splinestar[i,j],tau.z[j])
   lambdastar[i,j] <- exp(zstar[i,j])
   }#End j loop
