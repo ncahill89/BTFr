@@ -43,16 +43,19 @@ response_curves <- function(obj,
 
     src_dat <- modern_mod$src_dat %>% dplyr::filter(species %in% species_select)
 
-    p = ggplot(data = empirical_data_long) + geom_point(aes(x = SWLI, y = proportion,
-        colour = "Observed Data"), alpha = 0.5) + geom_line(data = src_dat,
-        aes(x = SWLI, y = proportion, colour = "Model Estimates"), linetype = "dashed") +
-        geom_line(data = src_dat, aes(x = SWLI, y = proportion_lwr, colour = "Model Estimates"),
-            linetype = "dashed") + geom_line(data = src_dat, aes(x = SWLI,
-        y = proportion_upr, colour = "Model Estimates"), linetype = "dashed") +
-        scale_colour_manual(name = "", values = c("red", "grey"), guide = guide_legend(override.aes = list(linetype = c("dashed",
+    p = ggplot(data = empirical_data_long) + 
+        geom_point(aes(x = SWLI, y = proportion,
+        colour = "Observed Data"), alpha = 0.5) + 
+        geom_line(data = src_dat, aes(x = SWLI, y = proportion, colour = "Model Estimates")) +
+        geom_ribbon(data = src_dat,aes(x = SWLI,ymin = proportion_lwr, ymax = proportion_upr), alpha = 0.5) + 
+         # geom_line(data = src_dat, aes(x = SWLI, y = proportion_lwr, colour = "Model Estimates"),
+         #     linetype = "dashed") +
+         # geom_line(data = src_dat, aes(x = SWLI,
+         # y = proportion_upr, colour = "Model Estimates"), linetype = "dashed") +
+        scale_colour_manual(name = "", values = c("red", "grey"), guide = guide_legend(override.aes = list(linetype = c("solid",
             "blank"), shape = c(NA, 16)))) + theme_minimal() + ylim(0,
         1) + ggtitle("Species Response Curves") + facet_wrap(~species,
-        scales = "free")
+        scales = "free") 
 
 
     return(list(src_plot = p, src_empirical_dat = empirical_data_long,
