@@ -119,7 +119,7 @@ run_modern <- function(modern_elevation = NULL,
     
       
     # Jags model data
-    pars = c("p","alpha", "beta.j", "sigma.z", "sigma.delta", "delta.hj", "splinestar")
+    pars = c("p","alpha", "beta.j", "sigma.z", "sigma.delta", "delta.hj", "splinestar","zstar")
 
     data = list(y = y, n = nrow(y), m = ncol(y), N_count = N_count, H = H,
         Z.ih = Z.ih, Zstar.ih = Zstar.ih, N_grid = grid_size, begin0 = begin0,mean_sigma_z = mean_sigma_z, sd_sigma_z = sd_sigma_z)
@@ -347,13 +347,13 @@ internal_get_core_input <- function(ChainNums, jags_data)
 
   # Get predicted values
   # ----------------------------------------------------
-  pred_pi_median <- apply(p_star_all, 2:3, median)
+  pred_pi_mean <- apply(p_star_all, 2:3, mean)
   pred_pi_high <- apply(p_star_all, 2:3, "quantile", 0.975)
   pred_pi_low <- apply(p_star_all, 2:3, "quantile", 0.025)
 
   # Plot of predicted output
   # ------------------------------------------------
-  df = data.frame(SWLI_grid * 100, pred_pi_median)
+  df = data.frame(SWLI_grid * 100, pred_pi_mean)
   df_low = data.frame(SWLI_grid * 100, pred_pi_low)
   df_high = data.frame(SWLI_grid * 100, pred_pi_high)
 
