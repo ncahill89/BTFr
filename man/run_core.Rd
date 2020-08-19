@@ -6,21 +6,19 @@
 \usage{
 run_core(
   obj,
-  core_counts.csv = NULL,
+  core_counts = NULL,
+  prior_el = NULL,
   dx = 0.2,
   ChainNums = seq(1, 3),
-  n.iter = 20000,
-  n.burnin = 5000,
-  n.thin = 10,
-  use.informative.priors = FALSE,
+  n.iter = 15000,
+  n.burnin = 1000,
+  n.thin = 7,
   validation.run = FALSE,
-  fold = 1
+  use_uniform_prior = FALSE
 )
 }
 \arguments{
 \item{obj}{An object of class \code{BTF} from \code{\link{run_modern}}}
-
-\item{core_counts.csv}{A .csv file containing core species counts}
 
 \item{dx}{Parameter for spacing of spline knots}
 
@@ -32,9 +30,11 @@ run_core(
 
 \item{n.thin}{The number of thinning}
 
-\item{use.informative.priors}{Set to TRUE if prior information is available}
+\item{core_counts.csv}{A .csv file containing core species counts}
 
 \item{run.on.server}{Set to TRUE for running chains in parallel on a server}
+
+\item{use.informative.priors}{Set to TRUE if prior information is available}
 }
 \value{
 Output will be saved to \code{output.dir}

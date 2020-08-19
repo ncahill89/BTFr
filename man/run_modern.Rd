@@ -5,22 +5,19 @@
 \title{Run the modern (calibration) model}
 \usage{
 run_modern(
-  modern_elevation.csv = NULL,
-  modern_counts.csv = NULL,
+  modern_elevation = NULL,
+  modern_counts = NULL,
   dx = 0.2,
   ChainNums = seq(1, 3),
   n.iter = 40000,
   n.burnin = 10000,
   n.thin = 15,
   validation.run = FALSE,
+  sigma_z_priors = NULL,
   fold = 1
 )
 }
 \arguments{
-\item{modern_elevation.csv}{A .csv file location for modern elevations}
-
-\item{modern_counts.csv}{A .csv file location for modern counts (to be sorted with \code{\link{sort_modern}})}
-
 \item{dx}{The elevation interval for spacing the spline knots. Defaults to 0.2.}
 
 \item{ChainNums}{The number of MCMC chains to run}
@@ -30,6 +27,10 @@ run_modern(
 \item{n.burnin}{The number of burnin samples}
 
 \item{n.thin}{The number of thinning}
+
+\item{modern_elevation.csv}{A .csv file location for modern elevations}
+
+\item{modern_counts.csv}{A .csv file location for modern counts (to be sorted with \code{\link{sort_modern}})}
 
 \item{run.on.server}{Set to TRUE if you wish to run the chains in parallel on a server}
 }

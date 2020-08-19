@@ -4,7 +4,7 @@
 \alias{response_curves}
 \title{Create Species Response Curves}
 \usage{
-response_curves(obj, species_select)
+response_curves(obj, species_select = NULL)
 }
 \arguments{
 \item{obj}{An object of class \code{BTF} from \code{\link{run_modern}}}
