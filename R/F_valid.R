@@ -8,9 +8,19 @@
 #'
 #' @examples
 #' run_valid()
-run_valid <- function(modern_elevation,
-                      modern_counts)
+run_valid <- function(modern_elevation = NULL,
+                      modern_counts = NULL)
 {
+  
+  # read in the modern data
+  if (is.null(modern_counts)) {
+     modern_counts <- BTF::modern_counts
+  }
+  
+  # read in the elevation data
+  if (is.null(modern_elevation)) {
+    elevation_dat <- BTF::modern_elevation
+  }
   
   valid_SWLI <- tibble(Depth = numeric(),
                        SWLI = numeric(),
