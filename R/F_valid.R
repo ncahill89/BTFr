@@ -5,6 +5,7 @@
 #'
 #' @return A table of validation results
 #' @export
+#' @import tibble 
 #'
 #' @examples
 #' run_valid()
