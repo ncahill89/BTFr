@@ -26,7 +26,6 @@ run_core<-function( obj,
                     n.burnin=1000,
                     n.thin=7,
                     validation.run=FALSE,
-                    fold=1,
                     use_uniform_prior = FALSE)
 {
 
@@ -48,9 +47,9 @@ run_core<-function( obj,
 
   if(validation.run)
   {
+    depth <- 1:nrow(core_dat)
     core_data_sorted<-sort_core(core_dat = core_dat,
                                   species_names=obj$species_names)
-
   }
 
   #Check if data includes priors
@@ -63,22 +62,8 @@ run_core<-function( obj,
   }
 
   #Get other relevant info for the model
-  if(validation.run)
-  {
-    set.seed(3847)
-    K <- 10
-    folds <- rep(1:K,ceiling(nrow(core_data_sorted$coredata_sorted)/K))
-    folds <- folds[sample(1:nrow(core_data_sorted$coredata_sorted))]
-    testsamps<-which(folds==fold)
-    testsamps
+  y0<-core_data_sorted$coredata_sorted
 
-  y0<-core_data_sorted$coredata_sorted[testsamps,]
-  }
-  if(!validation.run)
-  {
-    y0<-core_data_sorted$coredata_sorted
-
-  }
   begin0<-obj$data$begin0
   el_mean<-mean(obj$data$x)
   N_count0<-apply(y0,1,sum)
@@ -87,8 +72,8 @@ run_core<-function( obj,
 
   if(is.null(prior_el))
   {
-    emin=rep(obj$elevation_min ,n0)
-    emax=rep(obj$elevation_max ,n0)
+    emin=rep(obj$elevation_min ,n0) - el_mean*0.2
+    emax=rep(obj$elevation_max ,n0) + el_mean*0.2
   }
 
   if(!is.null(prior_el))
@@ -131,7 +116,7 @@ run_core<-function( obj,
             delta0_sd = obj$delta0_sd,
             alpha0 = obj$alpha0,
             alpha0_sd = obj$alpha0_sd,
-            sigma.z = obj$sigma.z,
+            tau.z0 = obj$tau.z0,
             emin=emin,
             emax=emax,
             el_mean=el_mean,
@@ -157,11 +142,6 @@ run_core<-function( obj,
   # get_diagnostics(n=nrow(y0),
   #                 output.dir = output.dir,
   #                 use.informative.priors=use.informative.priors)
-
-  if(validation.run)
-  {
-    validresults(modern_elevation.csv,fold=fold)
-  }
 
   class(core_out) = 'BTF'
 
@@ -212,7 +192,7 @@ model{",sep="",append=FALSE, file = file.path("model.txt"), fill = TRUE)
   spline[i,j]<- alpha0 + beta0.j[j] + inprod(Z0.ih[i,],delta0.hj[,j])
 
   ##Account for over/under dispersion
-  z[i,j] ~ dnorm(spline[i,j],tau_z[j])
+  z[i,j] ~ dnorm(spline[i,j],tau.z0[j])
   lambda[i,j]<-exp(z[i,j])
   }#End j loop
 
@@ -229,17 +209,21 @@ model{",sep="",append=FALSE, file = file.path("model.txt"), fill = TRUE)
   Z0.ih <- B0.ik%*%Deltacomb.kh
 
   #Species specific
-  for(j in 1:(begin0-1))
-  {
+  # for(j in 1:(begin0-1))
+  # {
   #Over dispersion parameter
-   tau_z[j]<-1/(pow(sigma.z[j],2) +
-                pow(beta0_sd[j],2) + 
-                pow(alpha0_sd,2) + 
-                pow(delta0_sd[j],2))
+  # tau_z[j]<-1/(pow(sigma.z[j],2) +
+  #              pow(beta0_sd[j],2) +
+  #              pow(alpha0_sd,2) +
+  #              pow(delta0_sd[j],2))
   
-   #tau_z[j]<-1/(pow(sigma.z[j],2))
+  # tau_z[j]<-1/ (pow(beta0_sd[j],2) +
+  #              pow(alpha0_sd,2) +
+  #              pow(delta0_sd[j],2))
+   
+  #tau_z[j]<-1/(pow(sigma.z[j],2))
 
-  }
+ # }
   ",sep = "",append = TRUE, file = "model.txt",fill = TRUE)
   
   if(jags_data$use_uniform_prior == TRUE)

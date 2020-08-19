@@ -60,12 +60,15 @@ run_modern <- function(modern_elevation = NULL,
 
         y <- modern_data_sorted$moderndat_sorted[-test_samps, ]
         x <- (modern_elevation/100)[-test_samps]
-
+        y_test <- as_tibble(modern_data_sorted$moderndat_sorted[test_samps, ])
+        x_test <- as_tibble((modern_elevation/100)[test_samps])
     }
 
     if (!validation.run) {
         y <- modern_data_sorted$moderndat_sorted
         x <- (modern_elevation/100)
+        y_test <- NULL
+        x_test <- NULL
     }
 
     species_names <- modern_data_sorted$species_names
@@ -137,6 +140,8 @@ run_modern <- function(modern_elevation = NULL,
 
     # Get model output needed for the core run
     data[["x"]] <- x
+    data[["y_test"]] <- y_test
+    data[["x_test"]] <- x_test
     
     jags_data <- list(data = data, pars = pars, elevation_max = elevation_max,
                       elevation_min = elevation_min, dx = dx, species_names = species_names)
@@ -156,7 +161,7 @@ run_modern <- function(modern_elevation = NULL,
                        alpha0 = core_input$alpha0,
                        alpha0_sd = core_input$alpha0_sd,
                        beta0_sd = core_input$beta0_sd, 
-                       sigma.z = core_input$sigma.z, 
+                       tau.z0 = core_input$tau.z0, 
                        src_dat = core_input$src_dat)
 
     class(modern_out) = 'BTF'
@@ -275,9 +280,19 @@ internal_get_core_input <- function(ChainNums, jags_data)
   Delta.hk <- diff(diag(K), diff = Dmat) # difference matrix
   Deltacomb.kh <- t(Delta.hk)%*%solve(Delta.hk%*%t(Delta.hk))
 
+  # Get model estimates
+  # Data
+  y <- jags_data$data$y
+  n <- nrow(y)
+  m <- ncol(y)
+  grid_size = 50
+  SWLI_grid = seq(jags_data$elevation_min, jags_data$elevation_max, length = grid_size)
+  species_names <- jags_data$species_names
+  
+  
   ##########Get parameter estimates
   delta.hj_samps <- array(NA,c(n_samps,jags_data$data$H,(begin0-1)))
-  beta.j_samps <- sigma.z_samps<-array(NA,c(n_samps,(begin0-1)))
+  beta.j_samps <- sigma.z_samps <- array(NA,c(n_samps,(begin0-1)))
   alpha_samps <- rep(NA, n_samps)
   
     for(j in 1:(begin0-1))
@@ -308,34 +323,42 @@ internal_get_core_input <- function(ChainNums, jags_data)
   beta0.j<-apply(beta.j_samps,2,mean)
   beta0_sd<-apply(beta.j_samps,2,sd)
 
-  sigma.z<-apply(sigma.z_samps,2,median)
-  
   alpha0 <- mean(alpha_samps)
   alpha0_sd <- sd(alpha_samps)
   
-  # Get model estimates
-  # Data
-  y <- jags_data$data$y
-  n <- nrow(y)
-  m <- ncol(y)
-  grid_size = 50
-  SWLI_grid = seq(jags_data$elevation_min, jags_data$elevation_max, length = grid_size)
-  species_names <- jags_data$species_names
-
-  # ---------------------------------------------------- results objects
-  p_star <- p_star_all <- spline_star <- spline_star_all <- array(NA,
+  sigma.z0 <- rep(NA, m)
+  
+  for(i in 1:m)
+  sigma.z0[i] <- (alpha0_sd + beta0_sd[i] + delta0_sd[i]*SWLI_grid^2) %>% median
+  
+  if(any(is.na(sigma.z0)))
+  {
+    sigma.z0[which(is.na(sigma.z0))] = min(sigma.z0,na.rm = TRUE)
+  }
+  
+  tau.z0 <- 1/((sigma.z0*0.5)^2)
+  
+    # ---------------------------------------------------- results objects
+  p_star <- p_star_all <- spline_star <- z_star <- spline_star_all <- diff_z_spline <- array(NA,
                                                                   c(n_samps, length(SWLI_grid), m))
 
   for (i in 1:n_samps) {
     for (j in begin0:m) {
-      spline_star_all[i, , j] <- 1
+      spline_star_all[i, , j] <- 0
+      z_star[i, , j] <- 0
+      
+      diff_z_spline[i,,j] <- z_star[i,,j] - spline_star_all[i,,j]
     }
     for (j in 1:(begin0 - 1)) {
       for (k in 1:length(SWLI_grid)) x.index <- seq(1:length(SWLI_grid))
       spline_star_all[i, , j] <- exp(mcmc.array[i, sample(seq(1,
                                                               3), 1), paste0("splinestar[", x.index, ",", j, "]")])
+      z_star[i, , j] <- exp(mcmc.array[i, sample(seq(1,
+                                                              3), 1), paste0("zstar[", x.index, ",", j, "]")])
+      
     }
   }
+  
 
   for (i in 1:n_samps) {
     for (j in 1:m) {
@@ -381,6 +404,6 @@ internal_get_core_input <- function(ChainNums, jags_data)
              beta0_sd = beta0_sd, 
              alpha0 = alpha0,
              alpha0_sd = alpha0_sd,
-             sigma.z = sigma.z, 
+             tau.z0 = tau.z0, 
              src_dat = src_dat))
 }
