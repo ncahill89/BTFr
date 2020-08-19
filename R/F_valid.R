@@ -1,7 +1,8 @@
-#' Carry out a 10-fold cross validation
+#' Carry out a validation
 #'
 #' @param modern_elevation 
 #' @param modern_counts 
+#' @param n_folds 
 #'
 #' @return A table of validation results
 #' @export
@@ -10,7 +11,8 @@
 #' @examples
 #' run_valid()
 run_valid <- function(modern_elevation = NULL,
-                      modern_counts = NULL)
+                      modern_counts = NULL,
+                      n_folds = 1)
 {
   
   # read in the modern data
@@ -28,7 +30,7 @@ run_valid <- function(modern_elevation = NULL,
                        sigma = numeric(),
                        lower = numeric(),
                        True = numeric())
-  for(f in 1:10)
+  for(f in 1:n_folds)
   {
     modern_mod <- run_modern(modern_elevation,
                              modern_counts,
