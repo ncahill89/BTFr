@@ -1,6 +1,6 @@
 #' Create Species Response Curves
 #'
-#' @param obj An object of class \code{BTF} from \code{\link{run_modern}}
+#' @param modern_mod An object of class \code{BTF} from \code{\link{run_modern}}
 #' @param species_select a vector of species names for which you want to create response curves
 #'
 #' @return Response curve data files (empirical and model) and SRC plots
@@ -10,7 +10,7 @@
 #' @examples
 #' responsecurves()
 
-response_curves <- function(obj,
+response_curves <- function(modern_mod,
                             species_select = NULL) {
 
     # Data
@@ -45,17 +45,18 @@ response_curves <- function(obj,
 
     p = ggplot(data = empirical_data_long) + 
         geom_point(aes(x = SWLI, y = proportion,
-        colour = "Observed Data"), alpha = 0.5) + 
+        colour = "Observed Data"), alpha = 0.2) + 
         geom_line(data = src_dat, aes(x = SWLI, y = proportion, colour = "Model Estimates")) +
-        geom_ribbon(data = src_dat,aes(x = SWLI,ymin = proportion_lwr, ymax = proportion_upr), alpha = 0.5) + 
+        geom_ribbon(data = src_dat,aes(x = SWLI,ymin = proportion_lwr, ymax = proportion_upr), alpha = 0.3) + 
          # geom_line(data = src_dat, aes(x = SWLI, y = proportion_lwr, colour = "Model Estimates"),
          #     linetype = "dashed") +
          # geom_line(data = src_dat, aes(x = SWLI,
          # y = proportion_upr, colour = "Model Estimates"), linetype = "dashed") +
-        scale_colour_manual(name = "", values = c("red", "grey"), guide = guide_legend(override.aes = list(linetype = c("solid",
+        scale_colour_manual(name = "", values = c("red", "royalblue2"), guide = guide_legend(override.aes = list(linetype = c("solid",
             "blank"), shape = c(NA, 16)))) + theme_minimal() + ylim(0,
         1) + ggtitle("Species Response Curves") + facet_wrap(~species,
-        scales = "free") 
+        scales = "free") +
+        theme_classic()
 
 
     return(list(src_plot = p, src_empirical_dat = empirical_data_long,

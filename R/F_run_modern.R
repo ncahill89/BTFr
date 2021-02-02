@@ -2,7 +2,7 @@
 #' Run the modern (calibration) model
 #'
 #' @param modern_elevation.csv A .csv file location for modern elevations
-#' @param modern_counts.csv A .csv file location for modern counts (to be sorted with \code{\link{sort_modern}})
+#' @param modern_species.csv A .csv file location for modern counts (to be sorted with \code{\link{sort_modern}})
 #' @param dx The elevation interval for spacing the spline knots. Defaults to 0.2.
 #' @param ChainNums The number of MCMC chains to run
 #' @param n.iter The number of iterations
@@ -12,17 +12,13 @@
 #'
 #' @return Nothing is returned, the relevant data will be saved.
 #' @export
-#' @import R2jags rjags readr
+#' @import R2jags rjags readr dplyr
 #'
 #' @examples
-#' run_modern(modern_elevation.csv = 'elevation.csv',
-#' modern_counts.csv = 'counts.csv',
-#' n.iter=10,
-#' n.thin = 1,
-#' n.burnin = 1)
+#' run_modern()
 
 run_modern <- function(modern_elevation = NULL,
-                       modern_counts = NULL,
+                       modern_species = NULL,
                        dx = 0.2,
                        ChainNums = seq(1, 3),
                        n.iter = 40000,
@@ -35,9 +31,9 @@ run_modern <- function(modern_elevation = NULL,
     dir.create(file.path(getwd(), "temp.JAGSobjects"), showWarnings = FALSE)
 
     # read in the modern data
-    if (!is.null(modern_counts)) {
-        modern_dat <- modern_counts
-    } else modern_dat <- BTF::modern_counts
+    if (!is.null(modern_species)) {
+        modern_dat <- modern_species
+    } else modern_dat <- BTF::NJ_modern_species
 
     # Get the sorted (by species counts) modern data
     modern_data_sorted <- sort_modern(modern_dat)
@@ -45,7 +41,7 @@ run_modern <- function(modern_elevation = NULL,
     # read in the elevation data
     if (!is.null(modern_elevation)) {
         elevation_dat <- modern_elevation
-    } else elevation_dat <- BTF::modern_elevation
+    } else elevation_dat <- BTF::NJ_modern_elevation
 
     modern_elevation <- elevation_dat$SWLI
 
@@ -84,7 +80,7 @@ run_modern <- function(modern_elevation = NULL,
     N_count <- apply(y, 1, sum)
 
     ###### Regular B Splines Create some basis functions
-    res =  bbase(x, xl = elevation_min, xr = elevation_max, dx = dx)  # This creates the basis function matrix
+    res =  BTF:::bbase(x, xl = elevation_min, xr = elevation_max, dx = dx)  # This creates the basis function matrix
     B.ik <- res$B.ik
     K <- dim(B.ik)[2]
 
@@ -94,18 +90,10 @@ run_modern <- function(modern_elevation = NULL,
     Z.ih <- B.ik %*% Deltacomb.kh
     H <- dim(Z.ih)[2]
 
-    # Create for predictions
-    grid_size = 50
-    SWLI_grid = seq(elevation_min, elevation_max, length = grid_size)
-    res_star = bbase(SWLI_grid, xl = elevation_min, xr = elevation_max,
-        dx = dx)  # This creates the basis function matrix
-    Bstar.ik <- res_star$B
-    Zstar.ih <- Bstar.ik %*% Deltacomb.kh
-
     if(is.null(sigma_z_priors))
     {
       mean_sigma_z <- rep(0,ncol(y))
-      sd_sigma_z <- rep(2,ncol(y))
+      sd_sigma_z <- rep(1,ncol(y))
     }
     
     if(!is.null(sigma_z_priors))
@@ -122,16 +110,23 @@ run_modern <- function(modern_elevation = NULL,
     
       
     # Jags model data
-    pars = c("p","alpha", "beta.j", "sigma.z", "sigma.delta", "delta.hj", "splinestar","zstar")
+    pars = c("p", "beta.j", "sigma.z", "sigma.delta", "delta.hj", "spline")
 
-    data = list(y = y, n = nrow(y), m = ncol(y), N_count = N_count, H = H,
-        Z.ih = Z.ih, Zstar.ih = Zstar.ih, N_grid = grid_size, begin0 = begin0,mean_sigma_z = mean_sigma_z, sd_sigma_z = sd_sigma_z)
+    data = list(y = y, 
+                n = nrow(y), 
+                m = ncol(y), 
+                N_count = N_count, 
+                H = H,
+                Z.ih = Z.ih, 
+                begin0 = begin0,
+                mean_sigma_z = mean_sigma_z, 
+                sd_sigma_z = sd_sigma_z)
 
 
         for (chainNum in ChainNums) {
             cat(paste("Start chain ID ", chainNum), "\n")
 
-            InternalRunOneChain(chainNum = chainNum, jags_data = data,
+            BTF:::InternalRunOneChain(chainNum = chainNum, jags_data = data,
                 jags_pars = pars, n.burnin = n.burnin, n.iter = n.iter,
                 n.thin = n.thin)
 
@@ -158,9 +153,8 @@ run_modern <- function(modern_elevation = NULL,
                        delta0.hj = core_input$delta0.hj, 
                        delta0_sd = core_input$delta0_sd, 
                        beta0.j = core_input$beta0.j, 
-                       alpha0 = core_input$alpha0,
-                       alpha0_sd = core_input$alpha0_sd,
-                       beta0_sd = core_input$beta0_sd, 
+                       beta0_sd = core_input$beta0_sd,
+                       sig0_z = core_input$sig0_z,
                        tau.z0 = core_input$tau.z0, 
                        src_dat = core_input$src_dat)
 
@@ -189,7 +183,7 @@ InternalRunOneChain <- function(chainNum, jags_data, jags_pars, n.burnin,
   lambda[i,j] <- 1
   }
   for(j in 1:(begin0-1)){
-  spline[i,j] <- alpha + beta.j[j] + inprod(Z.ih[i,],delta.hj[,j])
+  spline[i,j] <- beta.j[j] + inprod(Z.ih[i,],delta.hj[,j])
   z[i,j] ~ dnorm(spline[i,j],tau.z[j])
   lambda[i,j] <- exp(z[i,j])
   }#End j loop
@@ -217,30 +211,14 @@ InternalRunOneChain <- function(chainNum, jags_data, jags_pars, n.burnin,
   #Smoothness
   tau.delta<-pow(sigma.delta,-2)
   sigma.delta~dt(0, 2^-2, 1)T(0,)
-
   ###Variance parameter###
-  for(j in 1:m){
-  tau.z[j]<-pow(sigma.z[j],-2)
-  sigma.z[j]~dt(mean_sigma_z[j], sd_sigma_z[j]^-2, 1)T(0,)
-
+  for(j in 1:(begin0-1)){
+  tau.z[j] <- pow(sigma.z[j],-2)
+  sigma.z[j] ~ dt(mean_sigma_z[j], sd_sigma_z[j]^-2, 1)T(0,)
   ###Intercept (species specific)
-  beta.j[j] ~ dnorm(0,0.01)
+  beta.j[j] ~ dt(0,100^-2,1)
   }
   
-  alpha ~ dnorm(0,0.01)
-  ########Get predictions
-  for(i in 1:N_grid){
-  for(j in begin0:m){
-  zstar[i,j] <- 0
-  lambdastar[i,j]<-exp(zstar[i,j])
-  }
-  for(j in 1:(begin0-1)){
-  splinestar[i,j] <- alpha + beta.j[j]+inprod(Zstar.ih[i,],delta.hj[,j])
-  zstar[i,j] ~ dnorm(splinestar[i,j],tau.z[j])
-  lambdastar[i,j] <- exp(zstar[i,j])
-  }#End j loop
-
-  }
   }##End model
   "
 
@@ -285,17 +263,15 @@ internal_get_core_input <- function(ChainNums, jags_data)
   y <- jags_data$data$y
   n <- nrow(y)
   m <- ncol(y)
-  grid_size = 50
-  SWLI_grid = seq(jags_data$elevation_min, jags_data$elevation_max, length = grid_size)
+  x <- jags_data$data$x
   species_names <- jags_data$species_names
   
   
   ##########Get parameter estimates
   delta.hj_samps <- array(NA,c(n_samps,jags_data$data$H,(begin0-1)))
   beta.j_samps <- sigma.z_samps <- array(NA,c(n_samps,(begin0-1)))
-  alpha_samps <- rep(NA, n_samps)
-  
-    for(j in 1:(begin0-1))
+
+      for(j in 1:(begin0-1))
     {
       for(h in 1:jags_data$data$H)
       {
@@ -306,56 +282,53 @@ internal_get_core_input <- function(ChainNums, jags_data)
       beta.j_samps[,j]<-mcmc.array[1:n_samps,sample(1,ChainNums),parname]
     }
 
-      
   for(j in 1:(begin0-1))
   {
+
     parname<-paste0("sigma.z[",j,"]")
     sigma.z_samps[,j]<-mcmc.array[1:n_samps,sample(1,ChainNums),parname]
   }
 
-  
-  parname <- paste0("alpha")
-  alpha_samps <- mcmc.array[1:n_samps,sample(1,ChainNums), parname]
-  
   delta0.hj<-apply(delta.hj_samps,2:3,mean)
   delta0_sd<-apply((apply(delta.hj_samps,2:3,sd)),2,median)
 
   beta0.j<-apply(beta.j_samps,2,mean)
-  beta0_sd<-apply(beta.j_samps,2,sd)
-
-  alpha0 <- mean(alpha_samps)
-  alpha0_sd <- sd(alpha_samps)
+  beta0_sd <- apply(beta.j_samps,2,sd) %>% median
   
-  sigma.z0 <- rep(NA, m)
+  sig0_z <- apply(sigma.z_samps,2,mean)
   
-  for(i in 1:m)
-  sigma.z0[i] <- (alpha0_sd + beta0_sd[i] + delta0_sd[i]*SWLI_grid^2) %>% median
+  ## August 2020
+  # sigma.z0 <- rep(NA, m)
+  # for(i in 1:m)
+  #   sigma.z0[i] <- (beta0_sd[i] + delta0_sd[i]*SWLI_grid^2) %>% median
+  # 
+  # if(any(is.na(sigma.z0)))
+  # {
+  #   sigma.z0[which(is.na(sigma.z0))] = min(sigma.z0,na.rm = TRUE)
+  # }
+  # tau.z0 <- 1/((sigma.z0*0.5)^2)
   
-  if(any(is.na(sigma.z0)))
+  ## September 2020
+  sigma.z0 <- rep(NA, (begin0-1))
+  for(i in 1:(begin0-1))
   {
-    sigma.z0[which(is.na(sigma.z0))] = min(sigma.z0,na.rm = TRUE)
+  sigma.z0[i] <- delta0_sd[i] + sig0_z[i]
   }
-  
-  tau.z0 <- 1/((sigma.z0*0.5)^2)
-  
-    # ---------------------------------------------------- results objects
-  p_star <- p_star_all <- spline_star <- z_star <- spline_star_all <- diff_z_spline <- array(NA,
-                                                                  c(n_samps, length(SWLI_grid), m))
+  tau.z0 <- 1/(sigma.z0^2)
+ 
+     # ---------------------------------------------------- results objects
+  p_star <- p_star_all <- spline_star <- z_star <- spline_star_all <- array(NA,
+                                                                  c(n_samps, length(x), m))
 
   for (i in 1:n_samps) {
     for (j in begin0:m) {
       spline_star_all[i, , j] <- 0
-      z_star[i, , j] <- 0
-      
-      diff_z_spline[i,,j] <- z_star[i,,j] - spline_star_all[i,,j]
     }
     for (j in 1:(begin0 - 1)) {
-      for (k in 1:length(SWLI_grid)) x.index <- seq(1:length(SWLI_grid))
+      for (k in 1:length(x)) x.index <- seq(1:length(x))
       spline_star_all[i, , j] <- exp(mcmc.array[i, sample(seq(1,
-                                                              3), 1), paste0("splinestar[", x.index, ",", j, "]")])
-      z_star[i, , j] <- exp(mcmc.array[i, sample(seq(1,
-                                                              3), 1), paste0("zstar[", x.index, ",", j, "]")])
-      
+                                                              3), 1), paste0("spline[", x.index, ",", j, "]")])
+ 
     }
   }
   
@@ -364,7 +337,7 @@ internal_get_core_input <- function(ChainNums, jags_data)
     for (j in 1:m) {
       p_star_all[i, , j] = spline_star_all[i, , j]/apply(spline_star_all[i,
                                                                          , ], 1, sum)
-
+      
     }
   }
 
@@ -373,14 +346,15 @@ internal_get_core_input <- function(ChainNums, jags_data)
   pred_pi_mean <- apply(p_star_all, 2:3, mean)
   pred_pi_high <- apply(p_star_all, 2:3, "quantile", 0.975)
   pred_pi_low <- apply(p_star_all, 2:3, "quantile", 0.025)
+  
 
   # Plot of predicted output
   # ------------------------------------------------
-  df = data.frame(SWLI_grid * 100, pred_pi_mean)
-  df_low = data.frame(SWLI_grid * 100, pred_pi_low)
-  df_high = data.frame(SWLI_grid * 100, pred_pi_high)
+  df = data.frame(x * 100, pred_pi_mean)
+  df_low = data.frame(x * 100, pred_pi_low)
+  df_high = data.frame(x * 100, pred_pi_high)
 
-  colnames(df) = c("SWLI", species_names)
+  colnames(df)  = c("SWLI", species_names)
   colnames(df_low) = c("SWLI", species_names)
   colnames(df_high) = c("SWLI", species_names)
 
@@ -395,15 +369,15 @@ internal_get_core_input <- function(ChainNums, jags_data)
 
   src_dat = df_long %>% dplyr::mutate(proportion_lwr = df_low_long %>%
                                          dplyr::pull(proportion_lwr), proportion_upr = df_high_long %>%
-                                         dplyr::pull(proportion_upr))
+                                         dplyr::pull(proportion_upr)) %>% 
+    dplyr::arrange(SWLI)
 
 
  return(list(delta0.hj = delta0.hj, 
              delta0_sd = delta0_sd,
              beta0.j = beta0.j, 
-             beta0_sd = beta0_sd, 
-             alpha0 = alpha0,
-             alpha0_sd = alpha0_sd,
+             beta0_sd = beta0_sd,
+             sig0_z = sig0_z,
              tau.z0 = tau.z0, 
              src_dat = src_dat))
 }

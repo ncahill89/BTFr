@@ -1,7 +1,7 @@
 #' Run the core model
 #'
 #' @param obj An object of class \code{BTF} from \code{\link{run_modern}}
-#' @param core_counts.csv A .csv file containing core species counts
+#' @param core_species.csv A .csv file containing core species counts
 #' @param dx Parameter for spacing of spline knots
 #' @param ChainNums The number of MCMC chains
 #' @param n.iter The number of MCMC iterations
@@ -16,9 +16,9 @@
 #' @importFrom dplyr "select" "ends_with"
 #' @importFrom tidyr "pivot_longer"
 #' @examples
-#' coremodel<-runcore(core_counts.csv = "core_counts.csv")
+#' coremodel<-runcore(core_species.csv = "core_species.csv")
 run_core<-function( obj,
-                    core_counts = NULL,
+                    core_species = NULL,
                     prior_el = NULL,
                     dx=0.2,
                     ChainNums = seq(1,3),
@@ -33,9 +33,9 @@ run_core<-function( obj,
   dir.create(file.path(getwd(), "temp.JAGSobjects"),showWarnings = FALSE)
 
   # read in the core data
-  if (!is.null(core_counts)) {
-    core_dat <- core_counts
-  } else core_dat <- BTF::core_counts
+  if (!is.null(core_species)) {
+    core_dat <- core_species
+  } else core_dat <- BTF::NJ_core_species
 
 
   if(!validation.run)
@@ -72,14 +72,14 @@ run_core<-function( obj,
 
   if(is.null(prior_el))
   {
-    emin=rep(obj$elevation_min ,n0) - el_mean*0.2
-    emax=rep(obj$elevation_max ,n0) + el_mean*0.2
+    emin=rep(obj$elevation_min ,n0) - 0.15
+    emax=rep(obj$elevation_max ,n0) + 0.15
   }
 
   if(!is.null(prior_el))
   {
-    emin=prior_emin
-    emax=prior_emax
+    emin = prior_emin
+    emax = prior_emax
   }
 
 
@@ -114,8 +114,6 @@ run_core<-function( obj,
             beta0_sd = obj$beta0_sd,
             delta0.hj= obj$delta0.hj,
             delta0_sd = obj$delta0_sd,
-            alpha0 = obj$alpha0,
-            alpha0_sd = obj$alpha0_sd,
             tau.z0 = obj$tau.z0,
             emin=emin,
             emax=emax,
@@ -189,10 +187,11 @@ model{",sep="",append=FALSE, file = file.path("model.txt"), fill = TRUE)
   lambda[i,j] <- 1
   }
   for(j in 1:(begin0-1)){
-  spline[i,j]<- alpha0 + beta0.j[j] + inprod(Z0.ih[i,],delta0.hj[,j])
+  spline[i,j] <- beta0.j[j] + inprod(Z0.ih[i,],delta0.hj[,j])
 
   ##Account for over/under dispersion
   z[i,j] ~ dnorm(spline[i,j],tau.z0[j])
+  #z[i,j] <- spline[i,j]
   lambda[i,j]<-exp(z[i,j])
   }#End j loop
 
@@ -207,23 +206,7 @@ model{",sep="",append=FALSE, file = file.path("model.txt"), fill = TRUE)
   #Get basis functions
   B0.ik <- pow(-1,(deg + 1)) * (L %*% t(D))
   Z0.ih <- B0.ik%*%Deltacomb.kh
-
-  #Species specific
-  # for(j in 1:(begin0-1))
-  # {
-  #Over dispersion parameter
-  # tau_z[j]<-1/(pow(sigma.z[j],2) +
-  #              pow(beta0_sd[j],2) +
-  #              pow(alpha0_sd,2) +
-  #              pow(delta0_sd[j],2))
   
-  # tau_z[j]<-1/ (pow(beta0_sd[j],2) +
-  #              pow(alpha0_sd,2) +
-  #              pow(delta0_sd[j],2))
-   
-  #tau_z[j]<-1/(pow(sigma.z[j],2))
-
- # }
   ",sep = "",append = TRUE, file = "model.txt",fill = TRUE)
   
   if(jags_data$use_uniform_prior == TRUE)
