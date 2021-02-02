@@ -4,10 +4,10 @@
 \alias{response_curves}
 \title{Create Species Response Curves}
 \usage{
-response_curves(obj, species_select = NULL)
+response_curves(modern_mod, species_select = NULL)
 }
 \arguments{
-\item{obj}{An object of class \code{BTF} from \code{\link{run_modern}}}
+\item{modern_mod}{An object of class \code{BTF} from \code{\link{run_modern}}}
 
 \item{species_select}{a vector of species names for which you want to create response curves}
 }

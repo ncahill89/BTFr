@@ -6,7 +6,7 @@
 \usage{
 run_core(
   obj,
-  core_counts = NULL,
+  core_species = NULL,
   prior_el = NULL,
   dx = 0.2,
   ChainNums = seq(1, 3),
@@ -30,7 +30,7 @@ run_core(
 
 \item{n.thin}{The number of thinning}
 
-\item{core_counts.csv}{A .csv file containing core species counts}
+\item{core_species.csv}{A .csv file containing core species counts}
 
 \item{run.on.server}{Set to TRUE for running chains in parallel on a server}
 
@@ -43,5 +43,5 @@ Output will be saved to \code{output.dir}
 Run the core model
 }
 \examples{
-coremodel<-runcore(core_counts.csv = "core_counts.csv")
+coremodel<-runcore(core_species.csv = "core_species.csv")
 }

@@ -6,7 +6,7 @@
 \usage{
 run_modern(
   modern_elevation = NULL,
-  modern_counts = NULL,
+  modern_species = NULL,
   dx = 0.2,
   ChainNums = seq(1, 3),
   n.iter = 40000,
@@ -30,7 +30,7 @@ run_modern(
 
 \item{modern_elevation.csv}{A .csv file location for modern elevations}
 
-\item{modern_counts.csv}{A .csv file location for modern counts (to be sorted with \code{\link{sort_modern}})}
+\item{modern_species.csv}{A .csv file location for modern counts (to be sorted with \code{\link{sort_modern}})}
 
 \item{run.on.server}{Set to TRUE if you wish to run the chains in parallel on a server}
 }
@@ -41,9 +41,5 @@ Nothing is returned, the relevant data will be saved.
 Run the modern (calibration) model
 }
 \examples{
-run_modern(modern_elevation.csv = 'elevation.csv',
-modern_counts.csv = 'counts.csv',
-n.iter=10,
-n.thin = 1,
-n.burnin = 1)
+run_modern()
 }

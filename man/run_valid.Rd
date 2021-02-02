@@ -2,20 +2,27 @@
 % Please edit documentation in R/F_valid.R
 \name{run_valid}
 \alias{run_valid}
-\title{Carry out a 10-fold cross validation}
+\title{Carry out a validation}
 \usage{
-run_valid(modern_elevation, modern_counts)
+run_valid(
+  modern_elevation = NULL,
+  modern_species = NULL,
+  n_folds = 1,
+  use_uniform_prior = FALSE
+)
 }
 \arguments{
 \item{modern_elevation}{}
 
-\item{modern_counts}{}
+\item{modern_species}{}
+
+\item{n_folds}{}
 }
 \value{
 A table of validation results
 }
 \description{
-Carry out a 10-fold cross validation
+Carry out a validation
 }
 \examples{
 run_valid()
