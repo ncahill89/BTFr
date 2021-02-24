@@ -15,5 +15,5 @@ library(BTF)
 ## About
 This package can be used to run the Bayesian Transfer Function (BTF). 
 There are options to use the package default which contains data for New Jersey, USA. 
-Alternatively, you can supply your own data. When supplying data, use the package defaults as templates for formatting.
+Alternatively, you can supply your own data. When supplying data, use the package defaults as templates for formatting. You'll find the vignette [here](https://rpubs.com/ncahill_stat/720476).
 
