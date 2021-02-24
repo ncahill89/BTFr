@@ -22,7 +22,9 @@ sort_modern <- function(modern_dat) {
         begin0 <- min(which(species_total == 0)) else begin0 <- length(species_total)
 
     species_names <- names(species_total)
-    return(list(moderndat_sorted = moderndat_sorted, begin0 = begin0, species_names = species_names))
+    return(list(moderndat_sorted = moderndat_sorted, 
+                begin0 = begin0, 
+                species_names = species_names))
 }
 
 #' Sort core dataset to be compatible with the sorted modern data

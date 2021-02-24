@@ -19,7 +19,7 @@
 
 run_modern <- function(modern_elevation = NULL,
                        modern_species = NULL,
-                       dx = 0.2,
+                       dx = 0.4,
                        ChainNums = seq(1, 3),
                        n.iter = 40000,
                        n.burnin = 10000,
@@ -43,7 +43,8 @@ run_modern <- function(modern_elevation = NULL,
         elevation_dat <- modern_elevation
     } else elevation_dat <- BTF::NJ_modern_elevation
 
-    modern_elevation <- elevation_dat$SWLI
+    modern_elevation <- scale(elevation_dat$SWLI)
+    scale_att <- attributes(modern_elevation)
 
 
     if (validation.run) {
@@ -55,14 +56,14 @@ run_modern <- function(modern_elevation = NULL,
         test_samps
 
         y <- modern_data_sorted$moderndat_sorted[-test_samps, ]
-        x <- (modern_elevation/100)[-test_samps]
+        x <- modern_elevation[-test_samps,1]
         y_test <- as_tibble(modern_data_sorted$moderndat_sorted[test_samps, ])
-        x_test <- as_tibble((modern_elevation/100)[test_samps])
+        x_test <- as_tibble(modern_elevation[test_samps,1])
     }
 
     if (!validation.run) {
         y <- modern_data_sorted$moderndat_sorted
-        x <- (modern_elevation/100)
+        x <- modern_elevation[,1]
         y_test <- NULL
         x_test <- NULL
     }
@@ -70,8 +71,8 @@ run_modern <- function(modern_elevation = NULL,
     species_names <- modern_data_sorted$species_names
 
     # Get min/max elevations (will be used with priors)
-    elevation_min <- floor(min(modern_elevation)/10)/10
-    elevation_max <- ceiling(max(modern_elevation)/10)/10
+    elevation_min <- floor(min(modern_elevation))
+    elevation_max <- ceiling(max(modern_elevation))
 
     # Get index for the first species (if any) that has all zero counts
     begin0 <- modern_data_sorted$begin0
@@ -85,7 +86,7 @@ run_modern <- function(modern_elevation = NULL,
     K <- dim(B.ik)[2]
 
     D = 1
-    Delta.hk <- diff(diag(K), diff = D)  # difference matrix
+    Delta.hk <- diff(diag(K), diff = D)
     Deltacomb.kh <- t(Delta.hk) %*% solve(Delta.hk %*% t(Delta.hk))
     Z.ih <- B.ik %*% Deltacomb.kh
     H <- dim(Z.ih)[2]
@@ -138,8 +139,14 @@ run_modern <- function(modern_elevation = NULL,
     data[["y_test"]] <- y_test
     data[["x_test"]] <- x_test
     
-    jags_data <- list(data = data, pars = pars, elevation_max = elevation_max,
-                      elevation_min = elevation_min, dx = dx, species_names = species_names)
+    jags_data <- list(data = data, 
+                      pars = pars, 
+                      elevation_max = elevation_max,
+                      elevation_min = elevation_min, 
+                      dx = dx, 
+                      species_names = species_names,
+                      x_center = scale_att$`scaled:center`,
+                      x_scale = scale_att$`scaled:scale`)
 
     core_input <- internal_get_core_input(ChainNums = ChainNums, jags_data = jags_data)
 
@@ -156,7 +163,9 @@ run_modern <- function(modern_elevation = NULL,
                        beta0_sd = core_input$beta0_sd,
                        sig0_z = core_input$sig0_z,
                        tau.z0 = core_input$tau.z0, 
-                       src_dat = core_input$src_dat)
+                       src_dat = core_input$src_dat,
+                       x_center = scale_att$`scaled:center`,
+                       x_scale = scale_att$`scaled:scale`)
 
     class(modern_out) = 'BTF'
 
@@ -350,9 +359,9 @@ internal_get_core_input <- function(ChainNums, jags_data)
 
   # Plot of predicted output
   # ------------------------------------------------
-  df = data.frame(x * 100, pred_pi_mean)
-  df_low = data.frame(x * 100, pred_pi_low)
-  df_high = data.frame(x * 100, pred_pi_high)
+  df = data.frame((x*jags_data$x_scale)+jags_data$x_center, pred_pi_mean)
+  df_low = data.frame((x*jags_data$x_scale)+jags_data$x_center, pred_pi_low)
+  df_high = data.frame((x*jags_data$x_scale)+jags_data$x_center, pred_pi_high)
 
   colnames(df)  = c("SWLI", species_names)
   colnames(df_low) = c("SWLI", species_names)

@@ -31,7 +31,7 @@ response_curves <- function(modern_mod,
         Pmat[i, ] <- y[i, ]/N_count[i]
     }
 
-    empirical_dat = data.frame(modern_mod$data$x * 100, Pmat)
+    empirical_dat = data.frame((modern_mod$data$x*modern_mod$x_scale)+modern_mod$x_center, Pmat)
     colnames(empirical_dat) = c("SWLI", species_names)
 
     # Plot of empirical probabilities

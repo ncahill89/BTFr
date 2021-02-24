@@ -20,7 +20,6 @@
 run_core<-function( obj,
                     core_species = NULL,
                     prior_el = NULL,
-                    dx=0.2,
                     ChainNums = seq(1,3),
                     n.iter=15000,
                     n.burnin=1000,
@@ -118,7 +117,9 @@ run_core<-function( obj,
             emin=emin,
             emax=emax,
             el_mean=el_mean,
-            use_uniform_prior = use_uniform_prior)
+            use_uniform_prior = use_uniform_prior,
+            x_center = obj$x_center,
+            x_scale = obj$x_scale)
 
    for (chainNum in ChainNums){
       cat(paste("Start chain ID ", chainNum), "\n")
@@ -134,8 +135,10 @@ run_core<-function( obj,
 
   data[["depth"]] <- depth
   #Store MCMC output in an array
-  get_core_out <- internal_get_core_output(ChainNums = ChainNums, jags_data = data)
-  core_out <- list(SWLI = get_core_out$SWLI, mcmc.array=get_core_out$x0.samps)
+  get_core_out <- internal_get_core_output(ChainNums = ChainNums, 
+                                           jags_data = data)
+  core_out <- list(SWLI = get_core_out$SWLI, 
+                   mcmc.array=get_core_out$x0.samps)
   #Get parameter diagnostics (for SWLI estimates)
   # get_diagnostics(n=nrow(y0),
   #                 output.dir = output.dir,
@@ -191,7 +194,6 @@ model{",sep="",append=FALSE, file = file.path("model.txt"), fill = TRUE)
 
   ##Account for over/under dispersion
   z[i,j] ~ dnorm(spline[i,j],tau.z0[j])
-  #z[i,j] <- spline[i,j]
   lambda[i,j]<-exp(z[i,j])
   }#End j loop
 
@@ -288,11 +290,11 @@ internal_get_core_output <- function(ChainNums, jags_data)
   for(i in 1:n)
   {
     parname<-paste0("x0[",i,"]")
-    x0.samps[,i]<-mcmc.array[1:n_samps,sample(1,ChainNums),parname]
+    x0.samps[,i]<-(mcmc.array[1:n_samps,sample(1,ChainNums),parname]*jags_data$x_scale)+jags_data$x_center
   }
 
-  SWLI<-apply(x0.samps,2,mean)*100
-  SWLI_SD<-apply(x0.samps,2,sd)*100
+  SWLI<-apply(x0.samps,2,mean)
+  SWLI_SD<-apply(x0.samps,2,sd)
   lower<- SWLI-2*SWLI_SD
   upper<- SWLI+2*SWLI_SD
 
