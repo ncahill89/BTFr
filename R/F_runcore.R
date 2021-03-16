@@ -55,8 +55,11 @@ run_core<-function( obj,
   if(!is.null(prior_el))
   {
   use.informative.priors = TRUE
-  prior_emin <- pmax(obj$elevation_min,prior_el$prior_lwr/100)
-  prior_emax <- pmin(obj$elevation_max, prior_el$prior_upr/100)
+  prior_lwr <- (prior_el$prior_lwr - obj$x_center)/obj$x_scale
+  prior_upr <- (prior_el$prior_upr - obj$x_center)/obj$x_scale
+  
+  prior_emin <- pmax(obj$elevation_min,prior_lwr)
+  prior_emax <- pmin(obj$elevation_max,prior_upr)
   cat("Running with informative priors")
   }
 
@@ -71,8 +74,8 @@ run_core<-function( obj,
 
   if(is.null(prior_el))
   {
-    emin=rep(obj$elevation_min ,n0) - 0.15
-    emax=rep(obj$elevation_max ,n0) + 0.15
+    emin=rep(obj$elevation_min ,n0) 
+    emax=rep(obj$elevation_max ,n0)
   }
 
   if(!is.null(prior_el))
