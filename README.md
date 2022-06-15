@@ -22,6 +22,6 @@ See [Vignette](https://rpubs.com/ncahill_stat/720476).
 
 ## Data
 
-There are options to use the package default which contains data for New Jersey, USA. 
+There are options to use the package default which contain data for New Jersey, USA. 
 Alternatively, you can supply your own data. When supplying data, use the package defaults as templates for formatting. You'll find more details in [the vignette](https://rpubs.com/ncahill_stat/720476).
 
