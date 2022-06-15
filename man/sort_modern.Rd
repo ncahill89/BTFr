@@ -7,14 +7,11 @@
 sort_modern(modern_dat)
 }
 \arguments{
-\item{moderndat}{A modern data object containing species counts}
+\item{modern_dat}{A modern data object containing species counts}
 }
 \value{
 Returns a modern dataset that has been sorted based on species count size, as well as the sorted species names and the index for the first species that contains all zero counts (if any)
 }
 \description{
 Sort modern species dataset based on total count size
-}
-\examples{
-moderncounts_sorted=sort_modern(modern_counts)
 }

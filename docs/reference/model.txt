@@ -1,0 +1,52 @@
+
+#--------------------------------------------------------------
+# Model for BTF
+# Niamh Cahill 2020
+#--------------------------------------------------------------
+
+model{
+
+  for(i in 1:n)
+  {
+
+  # Set up for basis functions where x0 needs to be estimated
+  for(k in 1:n_knots)
+  {
+  J[i,k]<-step(x0[i]-knots[k])
+  L[i,k]<-((x0[i]-knots[k])^deg)*J[i,k]
+  }
+
+  for(j in begin0:m){
+  lambda[i,j] <- 1
+  }
+  for(j in 1:(begin0-1)){
+  spline[i,j] <- beta0.j[j] + inprod(Z0.ih[i,],delta0.hj[,j])
+
+  ##Account for over/under dispersion
+  z[i,j] ~ dnorm(spline[i,j],tau.z0[j])
+  lambda[i,j]<-exp(z[i,j])
+  }#End j loop
+
+  y[i,]~dmulti(p[i,],N_count[i])
+  lambdaplus[i]<-sum(lambda[i,])
+
+  for(j in 1:m){
+  p[i,j]<-lambda[i,j]/lambdaplus[i]
+  }#End j loop
+  }#End i loop
+
+  #Get basis functions
+  B0.ik <- pow(-1,(deg + 1)) * (L %*% t(D))
+  Z0.ih <- B0.ik%*%Deltacomb.kh
+
+  
+
+    for(i in 1:n)
+    {
+    #Prior for x0
+      x0[i]~dnorm(x0.mean[i],sd.x0[i]^-2)
+      x0.mean[i]~dt(el_mean,1,1)T(emin[i],emax[i])
+      sd.x0[i] <- 0.1
+    }
+    
+}

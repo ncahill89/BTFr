@@ -19,14 +19,11 @@ ConstructMCMCArray(
 
 \item{core.run}{Set to TRUE if running core data}
 
-\item{output.dir}{Directory where MCMC output was stored and will be stored.}
+\item{use.informative.priors}{Set to TRUE if using informative priors}
 }
 \value{
 Invisible
 }
 \description{
 Read in JAGS objects and constructs \code{mcmc.array}, which is saved to \code{output}.
-}
-\examples{
-ConstructMCMCArray(ChainIDs = seq(1,3))
 }

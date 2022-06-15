@@ -1,14 +1,14 @@
 #' Run the core model
 #'
 #' @param obj An object of class \code{BTF} from \code{\link{run_modern}}
-#' @param core_species.csv A .csv file containing core species counts
-#' @param dx Parameter for spacing of spline knots
+#' @param core_species dataframe containing core species counts
+#' @param prior_el prior elevations if available
 #' @param ChainNums The number of MCMC chains
 #' @param n.iter The number of MCMC iterations
 #' @param n.burnin The number of burnin MCMC samples
 #' @param n.thin The number of thinning
-#' @param run.on.server Set to TRUE for running chains in parallel on a server
-#' @param use.informative.priors Set to TRUE if prior information is available
+#' @param validation.run Set to TRUE if running validation
+#' @param use_uniform_prior change prior on elevation to be uniform
 #'
 #' @return Output will be saved to \code{output.dir}
 #' @export
@@ -16,7 +16,16 @@
 #' @importFrom dplyr "select" "ends_with"
 #' @importFrom tidyr "pivot_longer"
 #' @examples
-#' coremodel<-runcore(core_species.csv = "core_species.csv")
+#' test_modern_mod <- run_modern(modern_elevation = NJ_modern_elevation,
+#'                               modern_species = NJ_modern_species,
+#'                               n.iter = 10,
+#'                               n.burnin = 1,
+#'                               n.thin = 1)
+#' test_core_mod <- run_core(test_modern_mod,
+#'                           core_species = NJ_core_species,
+#'                           n.iter = 10,
+#'                           n.burnin = 1,
+#'                           n.thin = 1)
 run_core<-function( obj,
                     core_species = NULL,
                     prior_el = NULL,
@@ -57,7 +66,7 @@ run_core<-function( obj,
   use.informative.priors = TRUE
   prior_lwr <- (prior_el$prior_lwr - obj$x_center)/obj$x_scale
   prior_upr <- (prior_el$prior_upr - obj$x_center)/obj$x_scale
-  
+
   prior_emin <- pmax(obj$elevation_min,prior_lwr)
   prior_emax <- pmin(obj$elevation_max,prior_upr)
   cat("Running with informative priors")
@@ -74,7 +83,7 @@ run_core<-function( obj,
 
   if(is.null(prior_el))
   {
-    emin=rep(obj$elevation_min ,n0) 
+    emin=rep(obj$elevation_min ,n0)
     emax=rep(obj$elevation_max ,n0)
   }
 
@@ -138,9 +147,9 @@ run_core<-function( obj,
 
   data[["depth"]] <- depth
   #Store MCMC output in an array
-  get_core_out <- internal_get_core_output(ChainNums = ChainNums, 
+  get_core_out <- internal_get_core_output(ChainNums = ChainNums,
                                            jags_data = data)
-  core_out <- list(SWLI = get_core_out$SWLI, 
+  core_out <- list(SWLI = get_core_out$SWLI,
                    mcmc.array=get_core_out$x0.samps)
   #Get parameter diagnostics (for SWLI estimates)
   # get_diagnostics(n=nrow(y0),
@@ -175,9 +184,9 @@ cat("
 # Model for BTF
 # Niamh Cahill 2020
 #--------------------------------------------------------------
-    
-model{",sep="",append=FALSE, file = file.path("model.txt"), fill = TRUE) 
-  
+
+model{",sep="",append=FALSE, file = file.path("model.txt"), fill = TRUE)
+
   cat("
   for(i in 1:n)
   {
@@ -211,9 +220,9 @@ model{",sep="",append=FALSE, file = file.path("model.txt"), fill = TRUE)
   #Get basis functions
   B0.ik <- pow(-1,(deg + 1)) * (L %*% t(D))
   Z0.ih <- B0.ik%*%Deltacomb.kh
-  
+
   ",sep = "",append = TRUE, file = "model.txt",fill = TRUE)
-  
+
   if(jags_data$use_uniform_prior == TRUE)
   {
   cat("
@@ -224,7 +233,7 @@ model{",sep="",append=FALSE, file = file.path("model.txt"), fill = TRUE)
     }
     ", sep = "", append = TRUE, file = "model.txt",fill = TRUE)
   }
-  
+
   if(jags_data$use_uniform_prior == FALSE)
   {
     cat(
@@ -238,10 +247,10 @@ model{",sep="",append=FALSE, file = file.path("model.txt"), fill = TRUE)
     }
     ",sep = "", append = TRUE,  file = "model.txt",fill = TRUE)
   }
-        
+
   cat("}"
       ,sep = "", append = TRUE, file = "model.txt",fill = TRUE)
-  
+
   mod <- suppressWarnings(jags(data=jags_data,
             parameters.to.save=jags_pars,
             model.file = "model.txt",
@@ -264,12 +273,12 @@ internal_get_core_output <- function(ChainNums, jags_data)
 
   mcmc.array <- ConstructMCMCArray(ChainIDs = ChainNums)
   n <- jags_data$n
-  
+
   pars.check<-rep(NA,n)
   for(i in 1:n)
     pars.check[i]<-paste0("x0[",i,"]")
-  
-  
+
+
   # Get gelman diagnostics (Rhat threshold = 1.1)
   # If gelman diagnostic fails then stop!
   gd<-gr_diag(mcmc.array,pars.check = pars.check)
@@ -277,13 +286,13 @@ internal_get_core_output <- function(ChainNums, jags_data)
   {
     cat("WARNING! Convergence issues, check trace plots \n")
   }
-  # If gelman diagnostic passes then get other diagnostics  
+  # If gelman diagnostic passes then get other diagnostics
   if(gd==0)
   {
     eff_size(mcmc.array,pars.check = pars.check)
     mcse(mcmc.array,pars.check = pars.check)
   }
-  
+
   n_samps<-dim(mcmc.array)[1]
 
   #Get the sorted core data

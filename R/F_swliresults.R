@@ -6,7 +6,17 @@
 #' @export
 #' @importFrom dplyr "select"
 #' @examples
-#' swliresults()
+#' test_modern_mod <- run_modern(modern_elevation = NJ_modern_elevation,
+#'                                 modern_species = NJ_modern_species,
+#'                                 n.iter = 10,
+#'                                 n.burnin = 1,
+#'                                 n.thin = 1)
+#' test_core_mod <- run_core(test_modern_mod,
+#'                           core_species = NJ_core_species,
+#'                           n.iter = 10,
+#'                           n.burnin = 1,
+#'                           n.thin = 1)
+#' swli_results(test_core_mod)
 swli_results<-function(obj)
 {
 

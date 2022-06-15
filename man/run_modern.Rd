@@ -7,7 +7,7 @@
 run_modern(
   modern_elevation = NULL,
   modern_species = NULL,
-  dx = 0.2,
+  dx = 0.4,
   ChainNums = seq(1, 3),
   n.iter = 40000,
   n.burnin = 10000,
@@ -18,6 +18,10 @@ run_modern(
 )
 }
 \arguments{
+\item{modern_elevation}{A dataframe of modern elevations}
+
+\item{modern_species}{A dataframe of modern counts (to be sorted with \code{\link{sort_modern}})}
+
 \item{dx}{The elevation interval for spacing the spline knots. Defaults to 0.2.}
 
 \item{ChainNums}{The number of MCMC chains to run}
@@ -28,11 +32,11 @@ run_modern(
 
 \item{n.thin}{The number of thinning}
 
-\item{modern_elevation.csv}{A .csv file location for modern elevations}
+\item{validation.run}{Set to TRUE if running a validation}
 
-\item{modern_species.csv}{A .csv file location for modern counts (to be sorted with \code{\link{sort_modern}})}
+\item{sigma_z_priors}{provide priors for foram variability if available}
 
-\item{run.on.server}{Set to TRUE if you wish to run the chains in parallel on a server}
+\item{fold}{Fold number for CV}
 }
 \value{
 Nothing is returned, the relevant data will be saved.
@@ -41,5 +45,10 @@ Nothing is returned, the relevant data will be saved.
 Run the modern (calibration) model
 }
 \examples{
-run_modern()
+test_modern_mod <- run_modern(modern_elevation = NJ_modern_elevation,
+                              modern_species = NJ_modern_species,
+                              n.iter = 10,
+                              n.burnin = 1,
+                              n.thin = 1)
+
 }

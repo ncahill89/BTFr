@@ -8,22 +8,24 @@ run_valid(
   modern_elevation = NULL,
   modern_species = NULL,
   n_folds = 1,
-  use_uniform_prior = FALSE
+  use_uniform_prior = FALSE,
+  dx = 0.2
 )
 }
 \arguments{
-\item{modern_elevation}{}
+\item{modern_elevation}{A dataframe of modern elevations}
 
-\item{modern_species}{}
+\item{modern_species}{A dataframe of modern counts (to be sorted with \code{\link{sort_modern}})}
 
-\item{n_folds}{}
+\item{n_folds}{Number of folds for CV}
+
+\item{use_uniform_prior}{change prior on elevation to be uniform}
+
+\item{dx}{The elevation interval for spacing the spline knots. Defaults to 0.2.}
 }
 \value{
 A table of validation results
 }
 \description{
 Carry out a validation
-}
-\examples{
-run_valid()
 }

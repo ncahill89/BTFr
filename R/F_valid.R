@@ -1,33 +1,33 @@
 #' Carry out a validation
 #'
-#' @param modern_elevation 
-#' @param modern_species 
-#' @param n_folds 
+#' @param modern_elevation A dataframe of modern elevations
+#' @param modern_species A dataframe of modern counts (to be sorted with \code{\link{sort_modern}})
+#' @param n_folds Number of folds for CV
+#' @param use_uniform_prior change prior on elevation to be uniform
+#' @param dx The elevation interval for spacing the spline knots. Defaults to 0.2.
 #'
 #' @return A table of validation results
 #' @export
 #' @importFrom dplyr "full_join"
-#' @import tibble 
+#' @import tibble
 #'
-#' @examples
-#' run_valid()
 run_valid <- function(modern_elevation = NULL,
                       modern_species = NULL,
                       n_folds = 1,
                       use_uniform_prior = FALSE,
-                      dx = 0.4)
+                      dx = 0.2)
 {
-  
+
   # read in the modern data
   if (is.null(modern_species)) {
      modern_species <- BTF::NJ_modern_species
   }
-  
+
   # read in the elevation data
   if (is.null(modern_elevation)) {
     elevation_dat <- BTF::NJ_modern_elevation
   }
-  
+
   valid_SWLI <- tibble(Depth = numeric(),
                        SWLI = numeric(),
                        sigma = numeric(),
@@ -40,21 +40,21 @@ run_valid <- function(modern_elevation = NULL,
                              validation.run = TRUE,
                              fold = f,
                              dx = dx)
-    
-    
+
+
     core_mod <- BTF::run_core(modern_mod,
                               core_species = modern_mod$data$y_test,
                               validation.run = TRUE,
                               use_uniform_prior = use_uniform_prior)
-    
+
   SWLI_res <- as_tibble(core_mod$SWLI)
   SWLI_res$True <- modern_mod$data$x_test$value*modern_mod$x_scale + modern_mod$x_center
-    
+
   valid_SWLI <- full_join(valid_SWLI,SWLI_res)
-  
-  
+
+
   }
-  
+
   return(valid_SWLI)
-  
+
 }

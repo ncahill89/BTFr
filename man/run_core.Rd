@@ -8,7 +8,6 @@ run_core(
   obj,
   core_species = NULL,
   prior_el = NULL,
-  dx = 0.2,
   ChainNums = seq(1, 3),
   n.iter = 15000,
   n.burnin = 1000,
@@ -20,7 +19,9 @@ run_core(
 \arguments{
 \item{obj}{An object of class \code{BTF} from \code{\link{run_modern}}}
 
-\item{dx}{Parameter for spacing of spline knots}
+\item{core_species}{dataframe containing core species counts}
+
+\item{prior_el}{prior elevations if available}
 
 \item{ChainNums}{The number of MCMC chains}
 
@@ -30,11 +31,9 @@ run_core(
 
 \item{n.thin}{The number of thinning}
 
-\item{core_species.csv}{A .csv file containing core species counts}
+\item{validation.run}{Set to TRUE if running validation}
 
-\item{run.on.server}{Set to TRUE for running chains in parallel on a server}
-
-\item{use.informative.priors}{Set to TRUE if prior information is available}
+\item{use_uniform_prior}{change prior on elevation to be uniform}
 }
 \value{
 Output will be saved to \code{output.dir}
@@ -43,5 +42,14 @@ Output will be saved to \code{output.dir}
 Run the core model
 }
 \examples{
-coremodel<-runcore(core_species.csv = "core_species.csv")
+test_modern_mod <- run_modern(modern_elevation = NJ_modern_elevation,
+                              modern_species = NJ_modern_species,
+                              n.iter = 10,
+                              n.burnin = 1,
+                              n.thin = 1)
+test_core_mod <- run_core(test_modern_mod,
+                          core_species = NJ_core_species,
+                          n.iter = 10,
+                          n.burnin = 1,
+                          n.thin = 1)
 }

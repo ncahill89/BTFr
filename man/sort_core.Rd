@@ -7,16 +7,13 @@
 sort_core(core_dat, species_names)
 }
 \arguments{
-\item{coredata}{A data object containing core species counts}
+\item{core_dat}{A data object containing core species counts}
 
-\item{speciesnames}{A list of species names that have been returned from \code{\link{sortmoderndata}}}
+\item{species_names}{A list of species names that have been returned from \code{\link{sort_modern}}}
 }
 \value{
-Returns the sorted coredata where the species columns are compatible with the modern data that has been returned from \code{\link{sortmoderndata}}
+Returns the sorted core data where the species columns are compatible with the modern data that has been returned from \code{\link{sort_modern}}
 }
 \description{
 Sort core dataset to be compatible with the sorted modern data
-}
-\examples{
-corecounts_sorted<-sortcoredata(coredata=core_counts,speciesnames)
 }

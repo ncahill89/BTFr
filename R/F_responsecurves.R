@@ -8,7 +8,12 @@
 #' @import ggplot2 magrittr
 #' @importFrom tidyr 'gather'
 #' @examples
-#' responsecurves()
+#' test_modern_mod <- run_modern(modern_elevation = NJ_modern_elevation,
+#'                          modern_species = NJ_modern_species,
+#'                           n.iter = 10,
+#'                           n.burnin = 1,
+#'                           n.thin = 1)
+#' response_curves(test_modern_mod)
 
 response_curves <- function(modern_mod,
                             species_select = NULL) {
@@ -43,11 +48,11 @@ response_curves <- function(modern_mod,
 
     src_dat <- modern_mod$src_dat %>% dplyr::filter(species %in% species_select)
 
-    p = ggplot(data = empirical_data_long) + 
+    p = ggplot(data = empirical_data_long) +
         geom_point(aes(x = SWLI, y = proportion,
-        colour = "Observed Data"), alpha = 0.2) + 
+        colour = "Observed Data"), alpha = 0.2) +
         geom_line(data = src_dat, aes(x = SWLI, y = proportion, colour = "Model Estimates")) +
-        geom_ribbon(data = src_dat,aes(x = SWLI,ymin = proportion_lwr, ymax = proportion_upr), alpha = 0.3) + 
+        geom_ribbon(data = src_dat,aes(x = SWLI,ymin = proportion_lwr, ymax = proportion_upr), alpha = 0.3) +
          # geom_line(data = src_dat, aes(x = SWLI, y = proportion_lwr, colour = "Model Estimates"),
          #     linetype = "dashed") +
          # geom_line(data = src_dat, aes(x = SWLI,
