@@ -2,10 +2,6 @@
 
   - The package requires the installation of the JAGS software. Click to [download JAGS](https://sourceforge.net/projects/mcmc-jags/).
 
-## Getting started
-
-See [Vignette]((https://rpubs.com/ncahill_stat/720476).
-
 ## Installation
 
   - This package is not currently on cran so you can download from Github. Make sure to have the `devtools` package installed and then execute the following: 
@@ -19,6 +15,10 @@ You can then load the BTF package using the `library` function.
 ```{r}
 library(BTF)
 ```
+
+## Getting started
+
+See [Vignette](https://rpubs.com/ncahill_stat/720476).
 
 ## Data
 
