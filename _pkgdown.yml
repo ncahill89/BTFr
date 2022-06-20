@@ -1,4 +1,4 @@
-url: https://ncahill89.github.io/EIVmodels/
+url: https://ncahill89.github.io/BTF/
 template:
   bootstrap: 5
 navbar:
@@ -7,27 +7,19 @@ navbar:
     - home
     - articles
     - slides
-    - tutorials
     - reference
     - news
   components:
     slides:
       text: Slides
       menu:
-      - text: Introduction to Bayesian EIV Models
-        href: https://rpubs.com/ncahill_stat/721541
+      - text: A Bayesian Statistical Model for Reconstructing Sea Levels
+        href: https://rpubs.com/ncahill_stat/892967
     articles:
       text: Vignettes
       menu:
       - text: Basics
         href: articles/eivmodels.html
-      - text: Change Point Regression
-        href: articles/CPTutorial.html
-    tutorials:
-      text: Tutorials
-      menu:
-      - text: GP Regression
-        href: https://www.niamhcahill.com/post/gp_tutorial/
     reference:
       text: Documentation
       href: reference/index.html
