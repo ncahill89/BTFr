@@ -1,0 +1,251 @@
+---
+title: "The Bayesian Transfer Function"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(warn=-1)
+```
+
+## Installation 
+Download the BTF package from Github https://github.com/ncahill89/BTF and use `devtools::install("BTF")` to install the package locally on your machine. Make sure that your working directory is set to where you have saved the BTF package. 
+
+Note the package will not work unless you have the JAGS (Just Another Gibbs Sampler) software installed on your machine. You can download and install JAGS from [here](https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Windows/) for Windows and [here](https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Mac%20OS%20X/) for MAC. 
+
+```{r, eval = FALSE}
+devtools::install("BTF")
+```
+
+You can then load the BTF package using the `library` function. 
+```{r}
+library(BTF)
+```
+
+## Introduction
+In this vignette we will run the Bayesian Transfer Function (BTF). There are options to use the package default which contains data for New Jersey, USA. Alternatively, you can supply your own data. When supplying data, use the package defaults as templates for formatting.
+
+__Example data from New Jersey, USA__
+```{r}
+## Example modern elevation
+BTF::NJ_modern_elevation
+```
+
+```{r}
+## Example modern species data
+BTF::NJ_modern_species
+```
+
+```{r}
+## Example core species data
+BTF::NJ_core_species
+```
+
+```{r}
+## Example core priors
+BTF::NJ_priors
+```
+
+## Run the modern calibration model
+This function takes arguments `modern_elevation` and `modern_species`. In the example below the package data for New Jersey is used. This will take ~50 minutes for the default data. 
+
+```{r, message=FALSE, eval = FALSE}
+modern_mod <- run_modern(modern_elevation = NJ_modern_elevation,
+                         modern_species = NJ_modern_species)
+```
+
+Save the `modern_mod` object to avoid having to rerun this part of the model again. You can save it with the name of your choosing. 
+
+```{r, eval = FALSE}
+saveRDS(modern_mod,file = "NJ_modern_BTF.rds")
+```
+
+To read it in again you use
+
+```{r}
+modern_mod <- readRDS(file = "NJ_modern_BTF.rds")
+```
+
+## Species Response Curves (SRC)
+
+The following will allow you to look at the species response curves. This function will also return the data used to generate the curves. This will return response curves for all species. 
+
+```{r}
+src <- response_curves(modern_mod)
+```
+
+Add the `select_species` argument to choose specific species you want to get the curves for.  
+
+```{r,fig.width= 5, fig.height=3}
+src <- response_curves(modern_mod,
+                       species_select = c("Ab","Al","Am","Hs","Jm+Bp","Mf","Mp","Pl","Tc","Tl+Sl"))
+```
+
+__Plot the SRCs__
+```{r, fig.width=8,fig.height=8}
+src$src_plot
+```
+
+__Get raw relative abundance data__
+```{r}
+src$src_empirical_dat
+```
+
+__Get model relative abundances__
+```{r}
+src$src_model_dat
+```
+
+
+## Run the reconstruction model
+Here we will get a reconstruction for the New Jersey Core provided as part of the package data. When this is finished it will provide some convergence diagnostics. You want to see the statement "The accuracy of the parameter estimation is adequate" to know everything has converged properly with the model. 
+
+
+```{r, eval = FALSE}
+NJ_core_species <- BTF::NJ_core_species
+
+core_mod <- BTF::run_core(modern_mod,
+                          core_species = NJ_core_species)
+```
+
+
+Save the `core_mod` object to avoid having to rerun this part of the model again. You can save it with the name of your choosing. 
+
+```{r, eval = FALSE}
+saveRDS(core_mod,file = "NJ_core_BTF.rds")
+```
+
+To read it in again you use
+
+```{r}
+core_mod <- readRDS(file = "NJ_core_BTF.rds")
+```
+
+
+## Get reconstruction results
+The following will return a data frame of SWLI estimates with uncertainties and a corresponding plot of the results.
+
+```{r}
+swli_res <- swli_results(core_mod)
+```
+
+__Get the results__
+```{r}
+swli_res$SWLI_dat
+```
+
+__Get a plot of the results__
+```{r, fig.width = 4, fig.height=8}
+swli_res$p_SWLI
+```
+
+If you wish to include priors for elevation then you can provide the prior information with the `prior_el` argument. Below is an example using the priors for New Jersey that are provided as part of the package data. 
+
+```{r, eval = FALSE}
+NJ_priors <- BTF::NJ_priors
+
+core_mod <- BTF::run_core(modern_mod,
+                          core_species = NJ_core_species,
+                          prior_el = NJ_priors)
+```
+
+
+## Using your own data
+The first thing you need to do is to make sure your data is formatted correctly and then read it in to R. Note, I use the `readr` package. Here I will read in some data from Newfoundland.
+
+```{r, eval = FALSE}
+library(readr)
+
+NFLD_modern_species <- read_csv("NFLD_modern_species.csv")
+
+NFLD_elevation <- read_csv("NFLD_elevation.csv")
+
+NFLD_core_species <- read_csv("NFLD_core_species.csv")
+
+```
+
+Once you have read in your data you can proceed with running the BTF. 
+
+```{r, eval = FALSE}
+modern_mod <- run_modern(modern_elevation = NFLD_elevation,
+                         modern_species = NFLD_modern_species)
+
+saveRDS(modern_mod, file = "NFLD_modern_mod.rds")
+```
+
+```{r, include = FALSE, echo = FALSE}
+modern_mod <- readRDS("NFLD_modern_mod.rds")
+```
+
+__Get response curves etc.__
+
+```{r, fig.width = 6, fig.height = 3}
+src <- response_curves(modern_mod,
+                       species_select = c("Jm+Bp","Mf"))
+src$src_plot
+```
+
+
+## Run the reconstruction model
+```{r, eval = FALSE}
+core_mod <- run_core(modern_mod,
+                     core_species = NFLD_core_species)
+
+saveRDS(core_mod, file = "NFLD_core_BTF.rds")
+```
+
+```{r, include = FALSE, echo = FALSE,eval = FALSE}
+core_mod <- readRDS("NFLD_core_BTF.rds")
+```
+
+__Look at the results__
+```{r,fig.width = 4, fig.height=8}
+swli_res <- swli_results(core_mod)
+swli_res$p_SWLI
+```
+
+## Run a validation
+This step should be taken if you have a new modern calibration dataset that has not previously been validated with the BTF. If you want to run a single validation with 90% training data and 10% test data (recommended for very large datasets) then run the code below. 
+
+```{r, eval = FALSE}
+valid_run <- run_valid(modern_elevation = NFLD_elevation, 
+                       modern_species = NFLD_modern_species)
+```
+
+If you want to run a full 10-fold cross validation to get an out of sample prediction for all the modern samples, then run the code below. Note this is computationally expensive (expect 24 hours of run time) as it is refitting the modern calibration and reconstruction models 10 times. 
+
+```{r, eval = FALSE}
+valid_run <- run_valid(modern_elevation = NFLD_elevation, 
+                       modern_species = NFLD_modern_species,
+                       n_folds = 10)
+```
+
+Save the `valid_run` object. You can save it with the name of your choosing. 
+
+```{r, eval = FALSE}
+saveRDS(valid_run, file = "valid_run_NFLD.rds")
+```
+
+To read it in again you use
+```{r}
+valid_run <- readRDS("valid_run_NFLD.rds")
+```
+
+An example of how to summarise the validation results. The coverage provides the % of the time the True SWLI falls within the model 95% credible intervals. The Root Mean Squared Error (RMSE) provides a measurement of prediction error. 
+
+```{r, fig.width= 6, fig.height=4, message=FALSE}
+library(dplyr)
+valid_run %>% summarise(coverage = sum(lower < True & True < upper)*100/n(),
+                        RMSE = sqrt(mean((True - SWLI)^2))) %>% round(2)
+```
+
+An example of how to visualise the validation results. 
+
+```{r, fig.width= 6, fig.height=4}
+library(ggplot2)
+ggplot(valid_run, aes(x = True, y = SWLI)) +
+  geom_point() + 
+  geom_errorbar(aes(ymin = lower, ymax = upper)) +
+  geom_line(aes(x = True, y = True))
+```
+
