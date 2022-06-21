@@ -1,26 +1,4 @@
 url: https://ncahill89.github.io/BTF/
 template:
   bootstrap: 5
-navbar:
-  structure:
-    left:
-    - home
-    - articles
-    - slides
-    - reference
-    - news
-  components:
-    slides:
-      text: Slides
-      menu:
-      - text: A Bayesian Statistical Model for Reconstructing Sea Levels
-        href: https://rpubs.com/ncahill_stat/721541
-    articles:
-      text: Vignettes
-      menu:
-      - text: Basics
-        href: articles/BTF.html
-    reference:
-      text: Documentation
-      href: reference/index.html
 
