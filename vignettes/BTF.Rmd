@@ -9,8 +9,6 @@ options(warn=-1)
 ```
 
 ## Installation 
-Download the BTF package from Github https://github.com/ncahill89/BTF and use `devtools::install("BTF")` to install the package locally on your machine. Make sure that your working directory is set to where you have saved the BTF package. 
-
 Note the package will not work unless you have the JAGS (Just Another Gibbs Sampler) software installed on your machine. You can download and install JAGS from [here](https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Windows/) for Windows and [here](https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Mac%20OS%20X/) for MAC. 
 
 ```{r, eval = FALSE}
