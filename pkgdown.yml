@@ -2,8 +2,8 @@ pandoc: 2.7.3
 pkgdown: 2.0.4
 pkgdown_sha: ~
 articles: {}
-last_built: 2022-06-20T09:46Z
+last_built: 2022-06-21T21:55Z
 urls:
-  reference: https://ncahill89.github.io/EIVmodels/reference
-  article: https://ncahill89.github.io/EIVmodels/articles
+  reference: https://ncahill89.github.io/BTF/reference
+  article: https://ncahill89.github.io/BTF/articles
 
