@@ -14,7 +14,7 @@ navbar:
       text: Slides
       menu:
       - text: A Bayesian Statistical Model for Reconstructing Sea Levels
-        href: https://rpubs.com/ncahill_stat/892967
+        href: https://rpubs.com/ncahill_stat/721541
     articles:
       text: Vignettes
       menu:
