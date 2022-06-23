@@ -64,8 +64,17 @@ run_core<-function( obj,
   if(!is.null(prior_el))
   {
   use.informative.priors = TRUE
+  if(obj$scale_x)
+  {
   prior_lwr <- (prior_el$prior_lwr - obj$x_center)/obj$x_scale
   prior_upr <- (prior_el$prior_upr - obj$x_center)/obj$x_scale
+  }
+  if(!obj$scale_x)
+  {
+    prior_lwr <- prior_el$prior_lwr/100
+    prior_upr <- prior_el$prior_upr/100
+  }
+
 
   prior_emin <- pmax(obj$elevation_min,prior_lwr)
   prior_emax <- pmin(obj$elevation_max,prior_upr)
@@ -148,7 +157,8 @@ run_core<-function( obj,
   data[["depth"]] <- depth
   #Store MCMC output in an array
   get_core_out <- internal_get_core_output(ChainNums = ChainNums,
-                                           jags_data = data)
+                                           jags_data = data,
+                                           scale_x = obj$scale_x)
   core_out <- list(SWLI = get_core_out$SWLI,
                    mcmc.array=get_core_out$x0.samps)
   #Get parameter diagnostics (for SWLI estimates)
@@ -268,7 +278,7 @@ model{",sep="",append=FALSE, file = file.path("model.txt"), fill = TRUE)
   return(invisible())
 }
 
-internal_get_core_output <- function(ChainNums, jags_data)
+internal_get_core_output <- function(ChainNums, jags_data, scale_x = FALSE)
 {
 
   mcmc.array <- ConstructMCMCArray(ChainIDs = ChainNums)
@@ -299,10 +309,22 @@ internal_get_core_output <- function(ChainNums, jags_data)
   Depth<-jags_data$depth
   x0.samps<-array(NA,c(n_samps,n))
 
+  if(scale_x)
+  {
   for(i in 1:n)
   {
     parname<-paste0("x0[",i,"]")
     x0.samps[,i]<-(mcmc.array[1:n_samps,sample(1,ChainNums),parname]*jags_data$x_scale)+jags_data$x_center
+  }
+  }
+
+  if(!scale_x)
+  {
+    for(i in 1:n)
+    {
+      parname<-paste0("x0[",i,"]")
+      x0.samps[,i]<-mcmc.array[1:n_samps,sample(1,ChainNums),parname]*100
+    }
   }
 
   SWLI<-apply(x0.samps,2,mean)

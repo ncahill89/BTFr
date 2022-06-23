@@ -24,13 +24,14 @@
 #'
 run_modern <- function(modern_elevation = NULL,
                        modern_species = NULL,
-                       dx = 0.4,
+                       dx = 0.1,
                        ChainNums = seq(1, 3),
                        n.iter = 40000,
                        n.burnin = 10000,
                        n.thin = 15,
                        validation.run = FALSE,
                        sigma_z_priors = NULL,
+                       scale_x = FALSE,
                        fold = 1) {
   dir.create(file.path(getwd(), "temp.JAGSobjects"), showWarnings = FALSE)
 
@@ -51,8 +52,17 @@ run_modern <- function(modern_elevation = NULL,
     elevation_dat <- BTF::NJ_modern_elevation
   }
 
+  if(scale_x)
+  {
   modern_elevation <- scale(elevation_dat$SWLI)
   scale_att <- attributes(modern_elevation)
+  }
+
+  if(!scale_x)
+  {
+    modern_elevation <- as.matrix(elevation_dat$SWLI/100)
+    scale_att <- NULL
+  }
 
 
   if (validation.run) {
@@ -159,7 +169,9 @@ run_modern <- function(modern_elevation = NULL,
     x_scale = scale_att$`scaled:scale`
   )
 
-  core_input <- internal_get_core_input(ChainNums = ChainNums, jags_data = jags_data)
+  core_input <- internal_get_core_input(ChainNums = ChainNums,
+                                        jags_data = jags_data,
+                                        scale_x = scale_x)
 
   # Update jags_data list
   modern_out <- list(
@@ -176,6 +188,7 @@ run_modern <- function(modern_elevation = NULL,
     sig0_z = core_input$sig0_z,
     tau.z0 = core_input$tau.z0,
     src_dat = core_input$src_dat,
+    scale_x = scale_x,
     x_center = scale_att$`scaled:center`,
     x_scale = scale_att$`scaled:scale`
   )
@@ -261,7 +274,7 @@ InternalRunOneChain <- function(chainNum, jags_data, jags_pars, n.burnin,
 }
 
 
-internal_get_core_input <- function(ChainNums, jags_data) {
+internal_get_core_input <- function(ChainNums, jags_data,scale_x = FALSE) {
   mcmc.array <- ConstructMCMCArray(ChainIDs = ChainNums)
 
   n_samps <- dim(mcmc.array)[1]
@@ -373,9 +386,19 @@ internal_get_core_input <- function(ChainNums, jags_data) {
 
   # Plot of predicted output
   # ------------------------------------------------
+  if(scale_x)
+  {
   df <- data.frame((x * jags_data$x_scale) + jags_data$x_center, pred_pi_mean)
   df_low <- data.frame((x * jags_data$x_scale) + jags_data$x_center, pred_pi_low)
   df_high <- data.frame((x * jags_data$x_scale) + jags_data$x_center, pred_pi_high)
+  }
+
+  if(!scale_x)
+  {
+    df <- data.frame(x*100, pred_pi_mean)
+    df_low <- data.frame(x*100 , pred_pi_low)
+    df_high <- data.frame(x*100, pred_pi_high)
+  }
 
   colnames(df) <- c("SWLI", species_names)
   colnames(df_low) <- c("SWLI", species_names)

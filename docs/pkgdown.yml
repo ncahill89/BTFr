@@ -1,9 +1,8 @@
 pandoc: 2.17.1.1
 pkgdown: 2.0.2
 pkgdown_sha: ~
-articles:
-  BTF: BTF.html
-last_built: 2022-06-21T21:45Z
+articles: {}
+last_built: 2022-06-21T21:53Z
 urls:
   reference: https://ncahill89.github.io/BTF/reference
   article: https://ncahill89.github.io/BTF/articles

@@ -7,13 +7,14 @@
 run_modern(
   modern_elevation = NULL,
   modern_species = NULL,
-  dx = 0.4,
+  dx = 0.1,
   ChainNums = seq(1, 3),
   n.iter = 40000,
   n.burnin = 10000,
   n.thin = 15,
   validation.run = FALSE,
   sigma_z_priors = NULL,
+  scale_x = FALSE,
   fold = 1
 )
 }
