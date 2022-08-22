@@ -275,6 +275,7 @@ InternalRunOneChain <- function(chainNum, jags_data, jags_pars, n.burnin,
 
 
 internal_get_core_input <- function(ChainNums, jags_data,scale_x = FALSE) {
+
   mcmc.array <- ConstructMCMCArray(ChainIDs = ChainNums)
 
   n_samps <- dim(mcmc.array)[1]
@@ -312,16 +313,16 @@ internal_get_core_input <- function(ChainNums, jags_data,scale_x = FALSE) {
     for (h in 1:jags_data$data$H)
     {
       parname <- paste0("delta.hj[", h, ",", j, "]")
-      delta.hj_samps[, h, j] <- mcmc.array[1:n_samps, sample(1, ChainNums), parname]
+      delta.hj_samps[, h, j] <- mcmc.array[1:n_samps, sample(ChainNums,1), parname]
     }
     parname <- paste0("beta.j[", j, "]")
-    beta.j_samps[, j] <- mcmc.array[1:n_samps, sample(1, ChainNums), parname]
+    beta.j_samps[, j] <- mcmc.array[1:n_samps, sample(ChainNums,1), parname]
   }
 
   for (j in 1:(begin0 - 1))
   {
     parname <- paste0("sigma.z[", j, "]")
-    sigma.z_samps[, j] <- mcmc.array[1:n_samps, sample(1, ChainNums), parname]
+    sigma.z_samps[, j] <- mcmc.array[1:n_samps, sample(ChainNums,1), parname]
   }
 
   delta0.hj <- apply(delta.hj_samps, 2:3, mean)
@@ -363,10 +364,7 @@ internal_get_core_input <- function(ChainNums, jags_data,scale_x = FALSE) {
     }
     for (j in 1:(begin0 - 1)) {
       for (k in 1:length(x)) x.index <- seq(1:length(x))
-      spline_star_all[i, , j] <- exp(mcmc.array[i, sample(seq(
-        1,
-        3
-      ), 1), paste0("spline[", x.index, ",", j, "]")])
+      spline_star_all[i, , j] <- exp(mcmc.array[i, sample(ChainNums,1), paste0("spline[", x.index, ",", j, "]")])
     }
   }
 
@@ -376,6 +374,7 @@ internal_get_core_input <- function(ChainNums, jags_data,scale_x = FALSE) {
       p_star_all[i, , j] <- spline_star_all[i, , j] / apply(spline_star_all[i, , ], 1, sum)
     }
   }
+
 
   # Get predicted values
   # ----------------------------------------------------
