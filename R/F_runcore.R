@@ -314,7 +314,7 @@ internal_get_core_output <- function(ChainNums, jags_data, scale_x = FALSE)
   for(i in 1:n)
   {
     parname<-paste0("x0[",i,"]")
-    x0.samps[,i]<-(mcmc.array[1:n_samps,sample(1,ChainNums),parname]*jags_data$x_scale)+jags_data$x_center
+    x0.samps[,i]<-(mcmc.array[1:n_samps,sample(ChainNums,1),parname]*jags_data$x_scale)+jags_data$x_center
   }
   }
 
@@ -323,7 +323,7 @@ internal_get_core_output <- function(ChainNums, jags_data, scale_x = FALSE)
     for(i in 1:n)
     {
       parname<-paste0("x0[",i,"]")
-      x0.samps[,i]<-mcmc.array[1:n_samps,sample(1,ChainNums),parname]*100
+      x0.samps[,i]<-mcmc.array[1:n_samps,sample(ChainNums,1),parname]*100
     }
   }
 
