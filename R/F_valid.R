@@ -15,7 +15,13 @@ run_valid <- function(modern_elevation = NULL,
                       modern_species = NULL,
                       n_folds = 1,
                       use_uniform_prior = FALSE,
-                      dx = 0.2)
+                      dx = 0.2,
+                      modern.iter = 40000,
+                      modern.burnin = 10000,
+                      modern.thin = 15,
+                      core.iter=15000,
+                      core.burnin=1000,
+                      core.thin=7)
 {
 
   # read in the modern data
@@ -39,17 +45,30 @@ run_valid <- function(modern_elevation = NULL,
                              modern_species,
                              validation.run = TRUE,
                              fold = f,
-                             dx = dx)
+                             dx = dx,
+                             n.iter = modern.iter,
+                             n.burnin = modern.burnin,
+                             n.thin = modern.thin)
 
 
     core_mod <- BTF::run_core(modern_mod,
                               core_species = modern_mod$data$y_test,
                               validation.run = TRUE,
-                              use_uniform_prior = use_uniform_prior)
+                              use_uniform_prior = use_uniform_prior,
+                              n.iter = core.iter,
+                              n.burnin = core.burnin,
+                              n.thin = core.thin)
 
   SWLI_res <- as_tibble(core_mod$SWLI)
-  SWLI_res$True <- modern_mod$data$x_test$value*modern_mod$x_scale + modern_mod$x_center
 
+  if(modern_mod$scale_x)
+  {
+  SWLI_res$True <- modern_mod$data$x_test$value*modern_mod$x_scale + modern_mod$x_center
+  }
+  if(!modern_mod$scale_x)
+  {
+    SWLI_res$True <- modern_mod$data$x_test$value*100
+  }
   valid_SWLI <- full_join(valid_SWLI,SWLI_res)
 
 

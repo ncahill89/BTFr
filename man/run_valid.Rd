@@ -9,7 +9,13 @@ run_valid(
   modern_species = NULL,
   n_folds = 1,
   use_uniform_prior = FALSE,
-  dx = 0.2
+  dx = 0.2,
+  modern.iter = 40000,
+  modern.burnin = 10000,
+  modern.thin = 15,
+  core.iter = 15000,
+  core.burnin = 1000,
+  core.thin = 7
 )
 }
 \arguments{
