@@ -37,6 +37,8 @@ run_modern(
 
 \item{sigma_z_priors}{provide priors for foram variability if available}
 
+\item{scale_x}{Set to TRUE to scale data to have mean 0 and sd 1}
+
 \item{fold}{Fold number for CV}
 }
 \value{
