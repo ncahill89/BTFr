@@ -18,11 +18,13 @@
 #' @export
 #'
 #' @examples
-#' test_modern_mod <- run_modern(modern_elevation = NJ_modern_elevation,
-#'                               modern_species = NJ_modern_species,
-#'                               n.iter = 10,
-#'                               n.burnin = 1,
-#'                               n.thin = 1)
+#' test_modern_mod <- run_modern(
+#'   modern_elevation = NJ_modern_elevation,
+#'   modern_species = NJ_modern_species,
+#'   n.iter = 10,
+#'   n.burnin = 1,
+#'   n.thin = 1
+#' )
 #'
 run_modern <- function(modern_elevation = NULL,
                        modern_species = NULL,
@@ -44,8 +46,9 @@ run_modern <- function(modern_elevation = NULL,
     modern_dat <- BTF::NJ_modern_species
   }
 
-  # Get the sorted (by species counts) modern data
+  # get the sorted (by species counts) modern data
   modern_data_sorted <- sort_modern(modern_dat)
+  species_names <- modern_data_sorted$species_names
 
   # read in the elevation data
   if (!is.null(modern_elevation)) {
@@ -54,19 +57,18 @@ run_modern <- function(modern_elevation = NULL,
     elevation_dat <- BTF::NJ_modern_elevation
   }
 
-  if(scale_x)
-  {
-  modern_elevation <- scale(elevation_dat$SWLI)
-  scale_att <- attributes(modern_elevation)
+  # apply scaling if specified
+  if (scale_x) {
+    modern_elevation <- scale(elevation_dat$SWLI)
+    scale_att <- attributes(modern_elevation)
   }
 
-  if(!scale_x)
-  {
-    modern_elevation <- as.matrix(elevation_dat$SWLI/100)
+  if (!scale_x) {
+    modern_elevation <- as.matrix(elevation_dat$SWLI / 100)
     scale_att <- NULL
   }
 
-
+  # run validation if specified
   if (validation.run) {
     set.seed(3847)
     K <- 10
@@ -88,8 +90,6 @@ run_modern <- function(modern_elevation = NULL,
     x_test <- NULL
   }
 
-  species_names <- modern_data_sorted$species_names
-
   # Get min/max elevations (will be used with priors)
   elevation_min <- floor(min(modern_elevation))
   elevation_max <- ceiling(max(modern_elevation))
@@ -100,7 +100,7 @@ run_modern <- function(modern_elevation = NULL,
   # Total species counts
   N_count <- apply(y, 1, sum)
 
-  ###### Regular B Splines Create some basis functions
+  # Regular B Splines Create some basis functions
   res <- bbase(x, xl = elevation_min, xr = elevation_max, dx = dx) # This creates the basis function matrix
   B.ik <- res$B.ik
   K <- dim(B.ik)[2]
@@ -111,6 +111,7 @@ run_modern <- function(modern_elevation = NULL,
   Z.ih <- B.ik %*% Deltacomb.kh
   H <- dim(Z.ih)[2]
 
+  # Prior specifications
   if (is.null(sigma_z_priors)) {
     mean_sigma_z <- rep(0, ncol(y))
     sd_sigma_z <- rep(1, ncol(y))
@@ -143,7 +144,7 @@ run_modern <- function(modern_elevation = NULL,
     sd_sigma_z = sd_sigma_z
   )
 
-
+  # run the model
   for (chainNum in ChainNums) {
     cat(paste("Start chain ID ", chainNum), "\n")
 
@@ -153,7 +154,6 @@ run_modern <- function(modern_elevation = NULL,
       n.thin = n.thin
     )
   }
-
 
   # Get model output needed for the core run
   data[["x"]] <- x
@@ -171,9 +171,12 @@ run_modern <- function(modern_elevation = NULL,
     x_scale = scale_att$`scaled:scale`
   )
 
-  core_input <- internal_get_core_input(ChainNums = ChainNums,
-                                        jags_data = jags_data,
-                                        scale_x = scale_x)
+  # create the core input
+  core_input <- internal_get_core_input(
+    ChainNums = ChainNums,
+    jags_data = jags_data,
+    scale_x = scale_x
+  )
 
   # Update jags_data list
   modern_out <- list(
@@ -275,14 +278,13 @@ InternalRunOneChain <- function(chainNum, jags_data, jags_pars, n.burnin,
   return(invisible())
 }
 
-
-internal_get_core_input <- function(ChainNums, jags_data,scale_x = FALSE) {
-
+#-----------------------------------------------------
+internal_get_core_input <- function(ChainNums, jags_data, scale_x = FALSE) {
   mcmc.array <- ConstructMCMCArray(ChainIDs = ChainNums)
 
   n_samps <- dim(mcmc.array)[1]
 
-  ######### For Splines
+  ######### For Splines #########
   # This creates the components for the basis function matrix
   xl <- jags_data$elevation_min
   xr <- jags_data$elevation_max
@@ -297,7 +299,8 @@ internal_get_core_input <- function(ChainNums, jags_data,scale_x = FALSE) {
   Delta.hk <- diff(diag(K), diff = Dmat) # difference matrix
   Deltacomb.kh <- t(Delta.hk) %*% solve(Delta.hk %*% t(Delta.hk))
 
-  # Get model estimates
+  ########## Get parameter estimates ##########
+
   # Data
   y <- jags_data$data$y
   n <- nrow(y)
@@ -305,8 +308,7 @@ internal_get_core_input <- function(ChainNums, jags_data,scale_x = FALSE) {
   x <- jags_data$data$x
   species_names <- jags_data$species_names
 
-
-  ########## Get parameter estimates
+  # Parameters
   delta.hj_samps <- array(NA, c(n_samps, jags_data$data$H, (begin0 - 1)))
   beta.j_samps <- sigma.z_samps <- array(NA, c(n_samps, (begin0 - 1)))
 
@@ -315,16 +317,16 @@ internal_get_core_input <- function(ChainNums, jags_data,scale_x = FALSE) {
     for (h in 1:jags_data$data$H)
     {
       parname <- paste0("delta.hj[", h, ",", j, "]")
-      delta.hj_samps[, h, j] <- mcmc.array[1:n_samps, sample(ChainNums,1), parname]
+      delta.hj_samps[, h, j] <- mcmc.array[1:n_samps, sample(ChainNums, 1), parname]
     }
     parname <- paste0("beta.j[", j, "]")
-    beta.j_samps[, j] <- mcmc.array[1:n_samps, sample(ChainNums,1), parname]
+    beta.j_samps[, j] <- mcmc.array[1:n_samps, sample(ChainNums, 1), parname]
   }
 
   for (j in 1:(begin0 - 1))
   {
     parname <- paste0("sigma.z[", j, "]")
-    sigma.z_samps[, j] <- mcmc.array[1:n_samps, sample(ChainNums,1), parname]
+    sigma.z_samps[, j] <- mcmc.array[1:n_samps, sample(ChainNums, 1), parname]
   }
 
   delta0.hj <- apply(delta.hj_samps, 2:3, mean)
@@ -335,18 +337,6 @@ internal_get_core_input <- function(ChainNums, jags_data,scale_x = FALSE) {
 
   sig0_z <- apply(sigma.z_samps, 2, mean)
 
-  ## August 2020
-  # sigma.z0 <- rep(NA, m)
-  # for(i in 1:m)
-  #   sigma.z0[i] <- (beta0_sd[i] + delta0_sd[i]*SWLI_grid^2) %>% median
-  #
-  # if(any(is.na(sigma.z0)))
-  # {
-  #   sigma.z0[which(is.na(sigma.z0))] = min(sigma.z0,na.rm = TRUE)
-  # }
-  # tau.z0 <- 1/((sigma.z0*0.5)^2)
-
-  ## September 2020
   sigma.z0 <- rep(NA, (begin0 - 1))
   for (i in 1:(begin0 - 1))
   {
@@ -354,7 +344,7 @@ internal_get_core_input <- function(ChainNums, jags_data,scale_x = FALSE) {
   }
   tau.z0 <- 1 / (sigma.z0^2)
 
-  # ---------------------------------------------------- results objects
+  # SRCs
   p_star <- p_star_all <- spline_star <- z_star <- spline_star_all <- array(
     NA,
     c(n_samps, length(x), m)
@@ -366,7 +356,7 @@ internal_get_core_input <- function(ChainNums, jags_data,scale_x = FALSE) {
     }
     for (j in 1:(begin0 - 1)) {
       for (k in 1:length(x)) x.index <- seq(1:length(x))
-      spline_star_all[i, , j] <- exp(mcmc.array[i, sample(ChainNums,1), paste0("spline[", x.index, ",", j, "]")])
+      spline_star_all[i, , j] <- exp(mcmc.array[i, sample(ChainNums, 1), paste0("spline[", x.index, ",", j, "]")])
     }
   }
 
@@ -379,26 +369,21 @@ internal_get_core_input <- function(ChainNums, jags_data,scale_x = FALSE) {
 
 
   # Get predicted values
-  # ----------------------------------------------------
   pred_pi_mean <- apply(p_star_all, 2:3, mean)
   pred_pi_high <- apply(p_star_all, 2:3, "quantile", 0.975)
   pred_pi_low <- apply(p_star_all, 2:3, "quantile", 0.025)
 
 
-  # Plot of predicted output
-  # ------------------------------------------------
-  if(scale_x)
-  {
-  df <- data.frame((x * jags_data$x_scale) + jags_data$x_center, pred_pi_mean)
-  df_low <- data.frame((x * jags_data$x_scale) + jags_data$x_center, pred_pi_low)
-  df_high <- data.frame((x * jags_data$x_scale) + jags_data$x_center, pred_pi_high)
+  if (scale_x) {
+    df <- data.frame((x * jags_data$x_scale) + jags_data$x_center, pred_pi_mean)
+    df_low <- data.frame((x * jags_data$x_scale) + jags_data$x_center, pred_pi_low)
+    df_high <- data.frame((x * jags_data$x_scale) + jags_data$x_center, pred_pi_high)
   }
 
-  if(!scale_x)
-  {
-    df <- data.frame(x*100, pred_pi_mean)
-    df_low <- data.frame(x*100 , pred_pi_low)
-    df_high <- data.frame(x*100, pred_pi_high)
+  if (!scale_x) {
+    df <- data.frame(x * 100, pred_pi_mean)
+    df_low <- data.frame(x * 100, pred_pi_low)
+    df_high <- data.frame(x * 100, pred_pi_high)
   }
 
   colnames(df) <- c("SWLI", species_names)
@@ -418,7 +403,6 @@ internal_get_core_input <- function(ChainNums, jags_data,scale_x = FALSE) {
     names_to = "species", values_to = "proportion_upr",
     -SWLI
   )
-
 
   src_dat <- df_long %>%
     dplyr::mutate(proportion_lwr = df_low_long %>%

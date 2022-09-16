@@ -2,6 +2,9 @@
 
 export("%>%")
 export(ConstructMCMCArray)
+export(eff_size)
+export(gr_diag)
+export(mcse)
 export(response_curves)
 export(run_core)
 export(run_modern)
