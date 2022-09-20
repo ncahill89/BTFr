@@ -11,8 +11,7 @@
 #' @param validation.run Set to TRUE if running a validation
 #' @param sigma_z_priors provide priors for foram variability if available
 #' @param fold Fold number for CV
-#' @param scale_x Set to TRUE to scale data to have mean 0 and sd 1
-
+#' @param scale_x Set to TRUE to scale elevation data to have mean 0 and sd 1
 #'
 #' @return Nothing is returned, the relevant data will be saved.
 #' @export

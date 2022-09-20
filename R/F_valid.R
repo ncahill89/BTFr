@@ -5,6 +5,13 @@
 #' @param n_folds Number of folds for CV
 #' @param use_uniform_prior change prior on elevation to be uniform
 #' @param dx The elevation interval for spacing the spline knots. Defaults to 0.2.
+#' @param modern.iter The number of iterations for the modern model
+#' @param modern.burnin The number of burnin samples for the modern model
+#' @param modern.thin The number of thinning for the modern model
+#' @param core.iter The number of iterations for the core model
+#' @param core.burnin The number of burnin samples for the core model
+#' @param core.thin The number of thinning for the core model
+#' @param scale_x Set to TRUE to scale elevation data to have mean 0 and sd 1
 #'
 #' @return A table of validation results
 #' @export
@@ -21,7 +28,8 @@ run_valid <- function(modern_elevation = NULL,
                       modern.thin = 15,
                       core.iter=15000,
                       core.burnin=1000,
-                      core.thin=7)
+                      core.thin=7,
+                      scale_x = FALSE)
 {
 
   # read in the modern data
@@ -48,7 +56,8 @@ run_valid <- function(modern_elevation = NULL,
                              dx = dx,
                              n.iter = modern.iter,
                              n.burnin = modern.burnin,
-                             n.thin = modern.thin)
+                             n.thin = modern.thin,
+                             scale_x = scale_x)
 
 
     core_mod <- BTF::run_core(modern_mod,

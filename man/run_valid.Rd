@@ -15,7 +15,8 @@ run_valid(
   modern.thin = 15,
   core.iter = 15000,
   core.burnin = 1000,
-  core.thin = 7
+  core.thin = 7,
+  scale_x = FALSE
 )
 }
 \arguments{
@@ -28,6 +29,20 @@ run_valid(
 \item{use_uniform_prior}{change prior on elevation to be uniform}
 
 \item{dx}{The elevation interval for spacing the spline knots. Defaults to 0.2.}
+
+\item{modern.iter}{The number of iterations for the modern model}
+
+\item{modern.burnin}{The number of burnin samples for the modern model}
+
+\item{modern.thin}{The number of thinning for the modern model}
+
+\item{core.iter}{The number of iterations for the core model}
+
+\item{core.burnin}{The number of burnin samples for the core model}
+
+\item{core.thin}{The number of thinning for the core model}
+
+\item{scale_x}{Set to TRUE to scale elevation data to have mean 0 and sd 1}
 }
 \value{
 A table of validation results
