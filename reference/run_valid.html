@@ -53,7 +53,8 @@
 <span>  modern.thin <span class="op">=</span> <span class="fl">15</span>,</span>
 <span>  core.iter <span class="op">=</span> <span class="fl">15000</span>,</span>
 <span>  core.burnin <span class="op">=</span> <span class="fl">1000</span>,</span>
-<span>  core.thin <span class="op">=</span> <span class="fl">7</span></span>
+<span>  core.thin <span class="op">=</span> <span class="fl">7</span>,</span>
+<span>  scale_x <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -77,6 +78,34 @@
 
 <dt>dx</dt>
 <dd><p>The elevation interval for spacing the spline knots. Defaults to 0.2.</p></dd>
+
+
+<dt>modern.iter</dt>
+<dd><p>The number of iterations for the modern model</p></dd>
+
+
+<dt>modern.burnin</dt>
+<dd><p>The number of burnin samples for the modern model</p></dd>
+
+
+<dt>modern.thin</dt>
+<dd><p>The number of thinning for the modern model</p></dd>
+
+
+<dt>core.iter</dt>
+<dd><p>The number of iterations for the core model</p></dd>
+
+
+<dt>core.burnin</dt>
+<dd><p>The number of burnin samples for the core model</p></dd>
+
+
+<dt>core.thin</dt>
+<dd><p>The number of thinning for the core model</p></dd>
+
+
+<dt>scale_x</dt>
+<dd><p>Set to TRUE to scale elevation data to have mean 0 and sd 1</p></dd>
 
 </dl></div>
     <div class="section level2">
