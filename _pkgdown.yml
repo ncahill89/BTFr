@@ -1,4 +1,14 @@
 url: https://ncahill89.github.io/BTF/
 template:
   bootstrap: 5
+navbar:
+  components:
+    articles:
+      text: Vignettes
+      menu:
+      - text: Basics
+        href: https://github.com/ncahill89/vignettes/blob/master/BTF.md
 
+    reference:
+      text: Documentation
+      href: reference/index.html
