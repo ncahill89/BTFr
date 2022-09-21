@@ -18,7 +18,7 @@ library(BTF)
 
 ## Getting started
 
-See [Vignette](https://rpubs.com/ncahill_stat/720476).
+See [Vignette](https://github.com/ncahill89/vignettes/blob/master/BTF.md).
 
 ## Data
 
