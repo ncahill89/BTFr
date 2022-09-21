@@ -7,13 +7,13 @@
   - This package is not currently on cran so you can download from Github. Make sure to have the `devtools` package installed and then execute the following: 
 
 ```
-devtools::install_github("ncahill89/BTF")
+devtools::install_github("ncahill89/BTFr")
 ```
 
 You can then load the BTF package using the `library` function. 
 
 ```{r}
-library(BTF)
+library(BTFr)
 ```
 
 ## Getting started
