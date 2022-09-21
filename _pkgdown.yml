@@ -8,7 +8,7 @@ navbar:
       menu:
       - text: Basics
         href: https://github.com/ncahill89/vignettes/blob/master/BTF.md
-
     reference:
       text: Documentation
       href: reference/index.html
+
