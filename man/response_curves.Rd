@@ -7,7 +7,7 @@
 response_curves(modern_mod, species_select = NULL)
 }
 \arguments{
-\item{modern_mod}{An object of class \code{BTF} from \code{\link{run_modern}}}
+\item{modern_mod}{An object of class \code{BTFr} from \code{\link{run_modern}}}
 
 \item{species_select}{a vector of species names for which you want to create response curves}
 }
@@ -18,10 +18,10 @@ Response curve data files (empirical and model) and SRC plots
 Create Species Response Curves
 }
 \examples{
-test_modern_mod <- run_modern(modern_elevation = NJ_modern_elevation,
+\donttest{test_modern_mod <- run_modern(modern_elevation = NJ_modern_elevation,
                          modern_species = NJ_modern_species,
                           n.iter = 10,
                           n.burnin = 1,
                           n.thin = 1)
-response_curves(test_modern_mod)
+response_curves(test_modern_mod)}
 }

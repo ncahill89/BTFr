@@ -1,6 +1,6 @@
 #' Create Species Response Curves
 #'
-#' @param modern_mod An object of class \code{BTF} from \code{\link{run_modern}}
+#' @param modern_mod An object of class \code{BTFr} from \code{\link{run_modern}}
 #' @param species_select a vector of species names for which you want to create response curves
 #'
 #' @return Response curve data files (empirical and model) and SRC plots
@@ -8,12 +8,12 @@
 #' @import ggplot2 magrittr
 #' @importFrom tidyr 'gather'
 #' @examples
-#' test_modern_mod <- run_modern(modern_elevation = NJ_modern_elevation,
+#' \donttest{test_modern_mod <- run_modern(modern_elevation = NJ_modern_elevation,
 #'                          modern_species = NJ_modern_species,
 #'                           n.iter = 10,
 #'                           n.burnin = 1,
 #'                           n.thin = 1)
-#' response_curves(test_modern_mod)
+#' response_curves(test_modern_mod)}
 
 response_curves <- function(modern_mod,
                             species_select = NULL) {

@@ -1,6 +1,6 @@
 #' Run the core model
 #'
-#' @param obj An object of class \code{BTF} from \code{\link{run_modern}}
+#' @param obj An object of class \code{BTFr} from \code{\link{run_modern}}
 #' @param core_species dataframe containing core species counts
 #' @param prior_el prior elevations if available
 #' @param ChainNums The number of MCMC chains
@@ -16,7 +16,7 @@
 #' @importFrom dplyr "select" "ends_with"
 #' @importFrom tidyr "pivot_longer"
 #' @examples
-#' test_modern_mod <- run_modern(modern_elevation = NJ_modern_elevation,
+#' \donttest{test_modern_mod <- run_modern(modern_elevation = NJ_modern_elevation,
 #'                               modern_species = NJ_modern_species,
 #'                               n.iter = 10,
 #'                               n.burnin = 1,
@@ -25,7 +25,7 @@
 #'                           core_species = NJ_core_species,
 #'                           n.iter = 10,
 #'                           n.burnin = 1,
-#'                           n.thin = 1)
+#'                           n.thin = 1)}
 run_core<-function( obj,
                     core_species = NULL,
                     prior_el = NULL,
@@ -43,7 +43,7 @@ run_core<-function( obj,
   # read in the core data
   if (!is.null(core_species)) {
     core_dat <- core_species
-  } else core_dat <- BTF::NJ_core_species
+  } else core_dat <- BTFr::NJ_core_species
 
 
   if(!validation.run)
@@ -166,7 +166,7 @@ run_core<-function( obj,
   #                 output.dir = output.dir,
   #                 use.informative.priors=use.informative.priors)
 
-  class(core_out) = 'BTF'
+  class(core_out) = 'BTFr'
 
   invisible(core_out)
 

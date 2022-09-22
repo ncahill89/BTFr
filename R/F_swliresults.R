@@ -1,12 +1,12 @@
 #' Get SWLI estimates and uncertainty
 #'
-#' @param obj An object of class \code{BTF} from \code{\link{run_core}}
+#' @param obj An object of class \code{BTFr} from \code{\link{run_core}}
 #'
 #' @return Table of results and plot
 #' @export
 #' @importFrom dplyr "select"
 #' @examples
-#' test_modern_mod <- run_modern(modern_elevation = NJ_modern_elevation,
+#' \donttest{test_modern_mod <- run_modern(modern_elevation = NJ_modern_elevation,
 #'                                 modern_species = NJ_modern_species,
 #'                                 n.iter = 10,
 #'                                 n.burnin = 1,
@@ -16,7 +16,7 @@
 #'                           n.iter = 10,
 #'                           n.burnin = 1,
 #'                           n.thin = 1)
-#' swli_results(test_core_mod)
+#' swli_results(test_core_mod)}
 swli_results<-function(obj)
 {
 

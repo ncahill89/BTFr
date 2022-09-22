@@ -48,12 +48,12 @@ Nothing is returned, the relevant data will be saved.
 Run the modern (calibration) model
 }
 \examples{
-test_modern_mod <- run_modern(
+\donttest{test_modern_mod <- run_modern(
   modern_elevation = NJ_modern_elevation,
   modern_species = NJ_modern_species,
   n.iter = 10,
   n.burnin = 1,
   n.thin = 1
-)
+)}
 
 }

@@ -17,7 +17,7 @@ run_core(
 )
 }
 \arguments{
-\item{obj}{An object of class \code{BTF} from \code{\link{run_modern}}}
+\item{obj}{An object of class \code{BTFr} from \code{\link{run_modern}}}
 
 \item{core_species}{dataframe containing core species counts}
 
@@ -42,7 +42,7 @@ Output will be saved to \code{output.dir}
 Run the core model
 }
 \examples{
-test_modern_mod <- run_modern(modern_elevation = NJ_modern_elevation,
+\donttest{test_modern_mod <- run_modern(modern_elevation = NJ_modern_elevation,
                               modern_species = NJ_modern_species,
                               n.iter = 10,
                               n.burnin = 1,
@@ -51,5 +51,5 @@ test_core_mod <- run_core(test_modern_mod,
                           core_species = NJ_core_species,
                           n.iter = 10,
                           n.burnin = 1,
-                          n.thin = 1)
+                          n.thin = 1)}
 }

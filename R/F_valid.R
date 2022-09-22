@@ -34,12 +34,12 @@ run_valid <- function(modern_elevation = NULL,
 
   # read in the modern data
   if (is.null(modern_species)) {
-     modern_species <- BTF::NJ_modern_species
+     modern_species <- BTFr::NJ_modern_species
   }
 
   # read in the elevation data
   if (is.null(modern_elevation)) {
-    elevation_dat <- BTF::NJ_modern_elevation
+    elevation_dat <- BTFr::NJ_modern_elevation
   }
 
   valid_SWLI <- tibble(Depth = numeric(),
@@ -49,7 +49,7 @@ run_valid <- function(modern_elevation = NULL,
                        True = numeric())
   for(f in 1:n_folds)
   {
-    modern_mod <- run_modern(modern_elevation,
+    modern_mod <- BTFr::run_modern(modern_elevation,
                              modern_species,
                              validation.run = TRUE,
                              fold = f,
@@ -60,7 +60,7 @@ run_valid <- function(modern_elevation = NULL,
                              scale_x = scale_x)
 
 
-    core_mod <- BTF::run_core(modern_mod,
+    core_mod <- BTFr::run_core(modern_mod,
                               core_species = modern_mod$data$y_test,
                               validation.run = TRUE,
                               use_uniform_prior = use_uniform_prior,

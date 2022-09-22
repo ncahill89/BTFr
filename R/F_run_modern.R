@@ -17,13 +17,13 @@
 #' @export
 #'
 #' @examples
-#' test_modern_mod <- run_modern(
+#' \donttest{test_modern_mod <- run_modern(
 #'   modern_elevation = NJ_modern_elevation,
 #'   modern_species = NJ_modern_species,
 #'   n.iter = 10,
 #'   n.burnin = 1,
 #'   n.thin = 1
-#' )
+#' )}
 #'
 run_modern <- function(modern_elevation = NULL,
                        modern_species = NULL,
@@ -42,7 +42,7 @@ run_modern <- function(modern_elevation = NULL,
   if (!is.null(modern_species)) {
     modern_dat <- modern_species
   } else {
-    modern_dat <- BTF::NJ_modern_species
+    modern_dat <- BTFr::NJ_modern_species
   }
 
   # get the sorted (by species counts) modern data
@@ -53,7 +53,7 @@ run_modern <- function(modern_elevation = NULL,
   if (!is.null(modern_elevation)) {
     elevation_dat <- modern_elevation
   } else {
-    elevation_dat <- BTF::NJ_modern_elevation
+    elevation_dat <- BTFr::NJ_modern_elevation
   }
 
   # apply scaling if specified
@@ -197,7 +197,7 @@ run_modern <- function(modern_elevation = NULL,
     x_scale = scale_att$`scaled:scale`
   )
 
-  class(modern_out) <- "BTF"
+  class(modern_out) <- "BTFr"
 
   invisible(modern_out)
 }
