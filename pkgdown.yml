@@ -2,7 +2,7 @@ pandoc: 2.7.3
 pkgdown: 2.0.6
 pkgdown_sha: ~
 articles: {}
-last_built: 2022-09-21T22:18Z
+last_built: 2022-09-22T10:19Z
 urls:
   reference: https://ncahill89.github.io/BTFr/reference
   article: https://ncahill89.github.io/BTFr/articles
