@@ -51,14 +51,14 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">run_modern</span><span class="op">(</span></span>
 <span>  modern_elevation <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  modern_species <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  scale_x <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  sigma_z_priors <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  dx <span class="op">=</span> <span class="fl">0.1</span>,</span>
 <span>  ChainNums <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">3</span><span class="op">)</span>,</span>
 <span>  n.iter <span class="op">=</span> <span class="fl">40000</span>,</span>
 <span>  n.burnin <span class="op">=</span> <span class="fl">10000</span>,</span>
 <span>  n.thin <span class="op">=</span> <span class="fl">15</span>,</span>
 <span>  validation.run <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  sigma_z_priors <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  scale_x <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  fold <span class="op">=</span> <span class="fl">1</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -73,8 +73,16 @@
 <dd><p>A dataframe of modern counts (to be sorted with <code><a href="sort_modern.html">sort_modern</a></code>)</p></dd>
 
 
+<dt>scale_x</dt>
+<dd><p>Set to TRUE to scale elevation data to have mean 0 and sd 1</p></dd>
+
+
+<dt>sigma_z_priors</dt>
+<dd><p>priors for foram variability (if available)</p></dd>
+
+
 <dt>dx</dt>
-<dd><p>The elevation interval for spacing the spline knots. Defaults to 0.2.</p></dd>
+<dd><p>The elevation interval for spacing the spline knots. Defaults to 0.2</p></dd>
 
 
 <dt>ChainNums</dt>
@@ -94,19 +102,11 @@
 
 
 <dt>validation.run</dt>
-<dd><p>Set to TRUE if running a validation</p></dd>
-
-
-<dt>sigma_z_priors</dt>
-<dd><p>provide priors for foram variability if available</p></dd>
-
-
-<dt>scale_x</dt>
-<dd><p>Set to TRUE to scale elevation data to have mean 0 and sd 1</p></dd>
+<dd><p>Defaults to FALSE. Set to TRUE if running a validation</p></dd>
 
 
 <dt>fold</dt>
-<dd><p>Fold number for CV</p></dd>
+<dd><p>Fold number for cross validation (CV)</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -118,7 +118,8 @@
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">test_modern_mod</span> <span class="op">&lt;-</span> <span class="fu">run_modern</span><span class="op">(</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
+<span class="r-in"><span><span class="va">test_modern_mod</span> <span class="op">&lt;-</span> <span class="fu">run_modern</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  modern_elevation <span class="op">=</span> <span class="va">NJ_modern_elevation</span>,</span></span>
 <span class="r-in"><span>  modern_species <span class="op">=</span> <span class="va">NJ_modern_species</span>,</span></span>
 <span class="r-in"><span>  n.iter <span class="op">=</span> <span class="fl">10</span>,</span></span>
@@ -162,6 +163,7 @@
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Hooraah, Chain 3 has finished! </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Run complete! </span>
+<span class="r-in"><span><span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
