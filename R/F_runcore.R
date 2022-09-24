@@ -1,7 +1,7 @@
 #' Run the core model
 #'
 #' @param obj An object of class \code{BTFr} from \code{\link{run_modern}}
-#' @param core_species dataframe containing core species counts
+#' @param core_species Dataframe containing core species counts
 #' @param prior_el prior elevations if available
 #' @param ChainNums The number of MCMC chains
 #' @param n.iter The number of MCMC iterations
@@ -12,7 +12,7 @@
 #'
 #' @return Output will be saved to \code{output.dir}
 #' @export
-#' @import R2jags rjags coda
+#' @import R2jags rjags
 #' @importFrom dplyr "select" "ends_with"
 #' @importFrom tidyr "pivot_longer"
 #' @examples
@@ -38,7 +38,6 @@ run_core<-function( obj,
 {
 
 
-  dir.create(file.path(getwd(), "temp.JAGSobjects"),showWarnings = FALSE)
 
   # read in the core data
   if (!is.null(core_species)) {
@@ -142,29 +141,28 @@ run_core<-function( obj,
             x_center = obj$x_center,
             x_scale = obj$x_scale)
 
+  temp_files <- rep(NA, length(ChainNums))
+
    for (chainNum in ChainNums){
       cat(paste("Start chain ID ", chainNum), "\n")
 
-      InternalRunCore(chainNum = chainNum,
+      run <- InternalRunCore(chainNum = chainNum,
                       jags_data = data,
                       jags_pars = pars,
                       n.burnin = n.burnin,
                       n.iter = n.iter,
                       n.thin = n.thin)
-
+      temp_files[chainNum] <- run$file
     }
 
   data[["depth"]] <- depth
   #Store MCMC output in an array
   get_core_out <- internal_get_core_output(ChainNums = ChainNums,
                                            jags_data = data,
-                                           scale_x = obj$scale_x)
+                                           scale_x = obj$scale_x,
+                                           temp_files = temp_files)
   core_out <- list(SWLI = get_core_out$SWLI,
                    mcmc.array=get_core_out$x0.samps)
-  #Get parameter diagnostics (for SWLI estimates)
-  # get_diagnostics(n=nrow(y0),
-  #                 output.dir = output.dir,
-  #                 use.informative.priors=use.informative.priors)
 
   class(core_out) = 'BTFr'
 
@@ -184,18 +182,18 @@ InternalRunCore <- function(#Do MCMC sampling
 ){
   # set seed before sampling the initial values
   set.seed.chain <- chainNum*209846
-  jags.dir <- file.path(getwd(), "temp.JAGSobjects/")
+  jags.dir <- tempdir()
   set.seed(set.seed.chain)
-  temp <- rnorm(1)
+  temp <- stats::rnorm(1)
 
   #The model for the modern data
+  model_file <- tempfile("model.txt")
 cat("
 #--------------------------------------------------------------
 # Model for BTF
-# Niamh Cahill 2020
 #--------------------------------------------------------------
 
-model{",sep="",append=FALSE, file = file.path("model.txt"), fill = TRUE)
+model{",sep="",append=FALSE, file = model_file, fill = TRUE)
 
   cat("
   for(i in 1:n)
@@ -231,7 +229,7 @@ model{",sep="",append=FALSE, file = file.path("model.txt"), fill = TRUE)
   B0.ik <- pow(-1,(deg + 1)) * (L %*% t(D))
   Z0.ih <- B0.ik%*%Deltacomb.kh
 
-  ",sep = "",append = TRUE, file = "model.txt",fill = TRUE)
+  ",sep = "",append = TRUE, file = model_file,fill = TRUE)
 
   if(jags_data$use_uniform_prior == TRUE)
   {
@@ -241,7 +239,7 @@ model{",sep="",append=FALSE, file = file.path("model.txt"), fill = TRUE)
     #Prior for x0
     x0[i]~dunif(emin[i],emax[i])
     }
-    ", sep = "", append = TRUE, file = "model.txt",fill = TRUE)
+    ", sep = "", append = TRUE, file = model_file,fill = TRUE)
   }
 
   if(jags_data$use_uniform_prior == FALSE)
@@ -255,15 +253,15 @@ model{",sep="",append=FALSE, file = file.path("model.txt"), fill = TRUE)
       x0.mean[i]~dt(el_mean,1,1)T(emin[i],emax[i])
       sd.x0[i] <- 0.1
     }
-    ",sep = "", append = TRUE,  file = "model.txt",fill = TRUE)
+    ",sep = "", append = TRUE,  file = model_file ,fill = TRUE)
   }
 
   cat("}"
-      ,sep = "", append = TRUE, file = "model.txt",fill = TRUE)
+      ,sep = "", append = TRUE, file = model_file ,fill = TRUE)
 
   mod <- suppressWarnings(jags(data=jags_data,
             parameters.to.save=jags_pars,
-            model.file = "model.txt",
+            model.file = model_file,
             n.chains=1,
             n.iter=n.iter,
             n.burnin=n.burnin,
@@ -272,16 +270,19 @@ model{",sep="",append=FALSE, file = file.path("model.txt"), fill = TRUE)
             jags.seed = set.seed.chain))
 
   mod_upd <- mod
-  save(mod_upd, file=file.path(getwd(), "temp.JAGSobjects", paste0("jags_mod", chainNum, ".Rdata")))
+  temp.jags.file <- tempfile(paste0("jags_mod",chainNum),jags.dir,".Rdata")
+  save(mod_upd, file = temp.jags.file)
 
   cat(paste("Hooraah, Chain", chainNum, "has finished!"), "\n")
-  return(invisible())
+
+  return(list(file = temp.jags.file))
 }
 
-internal_get_core_output <- function(ChainNums, jags_data, scale_x = FALSE)
+internal_get_core_output <- function(ChainNums, jags_data, scale_x = FALSE,temp_files)
 {
 
-  mcmc.array <- ConstructMCMCArray(ChainIDs = ChainNums)
+  mcmc.array <- ConstructMCMCArray(ChainIDs = ChainNums,
+                                   temp_files = temp_files)
   n <- jags_data$n
 
   pars.check<-rep(NA,n)
@@ -291,7 +292,7 @@ internal_get_core_output <- function(ChainNums, jags_data, scale_x = FALSE)
 
   # Get gelman diagnostics (Rhat threshold = 1.1)
   # If gelman diagnostic fails then stop!
-  gd<-gr_diag(mcmc.array,pars.check = pars.check)
+  gd<-BTFr::gr_diag(mcmc.array,pars.check = pars.check)
   if(gd==-1)
   {
     cat("WARNING! Convergence issues, check trace plots \n")
@@ -299,8 +300,8 @@ internal_get_core_output <- function(ChainNums, jags_data, scale_x = FALSE)
   # If gelman diagnostic passes then get other diagnostics
   if(gd==0)
   {
-    eff_size(mcmc.array,pars.check = pars.check)
-    mcse(mcmc.array,pars.check = pars.check)
+    BTFr::eff_size(mcmc.array,pars.check = pars.check)
+    BTFr::mcse(mcmc.array,pars.check = pars.check)
   }
 
   n_samps<-dim(mcmc.array)[1]
@@ -328,7 +329,7 @@ internal_get_core_output <- function(ChainNums, jags_data, scale_x = FALSE)
   }
 
   SWLI<-apply(x0.samps,2,mean)
-  SWLI_SD<-apply(x0.samps,2,sd)
+  SWLI_SD<-apply(x0.samps,2,stats::sd)
   lower<- SWLI-2*SWLI_SD
   upper<- SWLI+2*SWLI_SD
 

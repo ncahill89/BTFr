@@ -8,7 +8,8 @@ ConstructMCMCArray(
   ChainIDs,
   n.samplestot.max = 15000,
   core.run = FALSE,
-  use.informative.priors = FALSE
+  use.informative.priors = FALSE,
+  temp_files
 )
 }
 \arguments{
@@ -20,6 +21,8 @@ ConstructMCMCArray(
 \item{core.run}{Set to TRUE if running core data}
 
 \item{use.informative.priors}{Set to TRUE if using informative priors}
+
+\item{temp_files}{temporary JAGS files}
 }
 \value{
 Invisible

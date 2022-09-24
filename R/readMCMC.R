@@ -7,12 +7,16 @@
 #' @param n.samplestot.max Maximum number of posterior samples to save
 #' @param use.informative.priors Set to TRUE if using informative priors
 #' @param core.run Set to TRUE if running core data
+#' @param temp_files temporary JAGS files
 #'
 #' @return Invisible
 #' @export
 #'
-ConstructMCMCArray <- function(ChainIDs, n.samplestot.max = 15000, core.run = FALSE,
-                               use.informative.priors = FALSE) {
+ConstructMCMCArray <- function(ChainIDs,
+                               n.samplestot.max = 15000,
+                               core.run = FALSE,
+                               use.informative.priors = FALSE,
+                               temp_files) {
 
   # now combine the JAGS files into one mcmc.array
   n.chains <- length(ChainIDs)
@@ -21,9 +25,9 @@ ConstructMCMCArray <- function(ChainIDs, n.samplestot.max = 15000, core.run = FA
     return()
   }
 
-  jags.dir <- file.path(getwd(), "temp.JAGSobjects/")
   chain <- ifelse(length(ChainIDs) == 1, ChainIDs, ChainIDs[1])
-  load(file.path(jags.dir, paste0("jags_mod", chain, ".Rdata")))
+  temp.jags.file <- temp_files[chain]
+  load(temp.jags.file)
   n.sim <- dim(mod_upd$BUGSoutput$sims.array)[1]
   n.par <- dim(mod_upd$BUGSoutput$sims.array)[3]
   mcmc.array <- array(NA, c(n.sim, n.chains, n.par))
@@ -33,10 +37,8 @@ ConstructMCMCArray <- function(ChainIDs, n.samplestot.max = 15000, core.run = FA
   ]))
   for (chain in 1:n.chains) {
     chain_saved <- ifelse(length(ChainIDs) == 1, 1, ChainIDs[chain])
-    load(file.path(getwd(), "temp.JAGSobjects", paste0(
-      "jags_mod",
-      chain_saved, ".Rdata"
-    )))
+    temp.jags.file <- temp_files[chain_saved]
+    load(temp.jags.file)
     mcmc.array[1:n.sim, chain, ] <- mod_upd$BUGSoutput$sims.array[, 1, ]
   }
 

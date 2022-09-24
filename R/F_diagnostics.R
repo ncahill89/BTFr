@@ -6,6 +6,7 @@
 #'
 #' @return A message will appear about convergence
 #' @export
+#' @importFrom coda 'gelman.diag' 'effectiveSize' 'mcmc.list' 'as.mcmc'
 gr_diag <- function(mcmc.array,
                     pars.check) {
   R <- rep(NA, length(pars.check))
@@ -13,12 +14,12 @@ gr_diag <- function(mcmc.array,
   for (parname in pars.check) {
     p <- p + 1 # index
     mcmc.array.temp <- mcmc.array[, , parname]
-    mcmc <- mcmc.list()
+    mcmc <- coda::mcmc.list()
 
     for (chain in 1:dim(mcmc.array.temp)[2]) {
-      mcmc[[chain]] <- as.mcmc(mcmc.array.temp[, chain])
+      mcmc[[chain]] <- coda::as.mcmc(mcmc.array.temp[, chain])
     }
-    r <- gelman.diag(mcmc, autoburnin = FALSE, transform = F)$psrf
+    r <- coda::gelman.diag(mcmc, autoburnin = FALSE, transform = F)$psrf
     R[p] <- r[, "Point est."]
   }
 
@@ -57,9 +58,9 @@ eff_size <- function(mcmc.array,
     mcmc <- mcmc.list()
 
     for (chain in 1:dim(mcmc.array.temp)[2]) {
-      mcmc[[chain]] <- as.mcmc(mcmc.array.temp[, chain])
+      mcmc[[chain]] <- coda::as.mcmc(mcmc.array.temp[, chain])
     }
-    es <- effectiveSize(mcmc)
+    es <- coda::effectiveSize(mcmc)
     ESS[p] <- es / (dim(mcmc.array)[1] * dim(mcmc.array)[2])
   }
   names(ESS) <- pars.check
@@ -88,10 +89,10 @@ mcse <- function(mcmc.array,
     mcmc <- mcmc.list()
 
     for (chain in 1:dim(mcmc.array.temp)[2]) {
-      mcmc[[chain]] <- as.mcmc(mcmc.array.temp[, chain])
+      mcmc[[chain]] <- coda::as.mcmc(mcmc.array.temp[, chain])
     }
-    es <- effectiveSize(mcmc)
-    MCSE[p] <- (sd(mcmc.array.temp) / es) / sd(mcmc.array.temp)
+    es <- coda::effectiveSize(mcmc)
+    MCSE[p] <- (stats::sd(mcmc.array.temp) / es) / stats::sd(mcmc.array.temp)
   }
   names(MCSE) <- pars.check
   if (length(MCSE[MCSE > 0.1]) > 0) {

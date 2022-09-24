@@ -12,16 +12,21 @@ response_curves(modern_mod, species_select = NULL)
 \item{species_select}{a vector of species names for which you want to create response curves}
 }
 \value{
-Response curve data files (empirical and model) and SRC plots
+Response curve data files (empirical and model) and species response curve plots
 }
 \description{
 Create Species Response Curves
 }
 \examples{
-\donttest{test_modern_mod <- run_modern(modern_elevation = NJ_modern_elevation,
-                         modern_species = NJ_modern_species,
-                          n.iter = 10,
-                          n.burnin = 1,
-                          n.thin = 1)
-response_curves(test_modern_mod)}
+\donttest{
+test_modern_mod <- run_modern(
+  modern_elevation = NJ_modern_elevation,
+  modern_species = NJ_modern_species,
+  n.iter = 10,
+  n.burnin = 1,
+  n.thin = 1
+)
+response_curves(test_modern_mod)
+}
+
 }

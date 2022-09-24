@@ -19,7 +19,7 @@ run_core(
 \arguments{
 \item{obj}{An object of class \code{BTFr} from \code{\link{run_modern}}}
 
-\item{core_species}{dataframe containing core species counts}
+\item{core_species}{Dataframe containing core species counts}
 
 \item{prior_el}{prior elevations if available}
 

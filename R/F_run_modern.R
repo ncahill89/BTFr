@@ -3,41 +3,41 @@
 #'
 #' @param modern_elevation A dataframe of modern elevations
 #' @param modern_species A dataframe of modern counts (to be sorted with \code{\link{sort_modern}})
-#' @param dx The elevation interval for spacing the spline knots. Defaults to 0.2.
+#' @param scale_x Set to TRUE to scale elevation data to have mean 0 and sd 1
+#' @param sigma_z_priors priors for foram variability (if available)
+#' @param dx The elevation interval for spacing the spline knots. Defaults to 0.2
 #' @param ChainNums The number of MCMC chains to run
 #' @param n.iter The number of iterations
 #' @param n.burnin The number of burnin samples
 #' @param n.thin The number of thinning
-#' @param validation.run Set to TRUE if running a validation
-#' @param sigma_z_priors provide priors for foram variability if available
-#' @param fold Fold number for CV
-#' @param scale_x Set to TRUE to scale elevation data to have mean 0 and sd 1
+#' @param validation.run Defaults to FALSE. Set to TRUE if running a validation
+#' @param fold Fold number for cross validation (CV)
 #'
 #' @return Nothing is returned, the relevant data will be saved.
 #' @export
 #'
 #' @examples
-#' \donttest{test_modern_mod <- run_modern(
+#' \donttest{
+#' test_modern_mod <- run_modern(
 #'   modern_elevation = NJ_modern_elevation,
 #'   modern_species = NJ_modern_species,
 #'   n.iter = 10,
 #'   n.burnin = 1,
 #'   n.thin = 1
-#' )}
+#' )
+#' }
 #'
 run_modern <- function(modern_elevation = NULL,
                        modern_species = NULL,
+                       scale_x = FALSE,
+                       sigma_z_priors = NULL,
                        dx = 0.1,
                        ChainNums = seq(1, 3),
                        n.iter = 40000,
                        n.burnin = 10000,
                        n.thin = 15,
                        validation.run = FALSE,
-                       sigma_z_priors = NULL,
-                       scale_x = FALSE,
                        fold = 1) {
-  dir.create(file.path(getwd(), "temp.JAGSobjects"), showWarnings = FALSE)
-
   # read in the modern data
   if (!is.null(modern_species)) {
     modern_dat <- modern_species
@@ -144,14 +144,17 @@ run_modern <- function(modern_elevation = NULL,
   )
 
   # run the model
+  temp_files <- rep(NA, length(ChainNums))
   for (chainNum in ChainNums) {
     cat(paste("Start chain ID ", chainNum), "\n")
 
-    InternalRunOneChain(
+    run <- InternalRunOneChain(
       chainNum = chainNum, jags_data = data,
       jags_pars = pars, n.burnin = n.burnin, n.iter = n.iter,
       n.thin = n.thin
     )
+
+    temp_files[chainNum] <- run$file
   }
 
   # Get model output needed for the core run
@@ -167,7 +170,8 @@ run_modern <- function(modern_elevation = NULL,
     dx = dx,
     species_names = species_names,
     x_center = scale_att$`scaled:center`,
-    x_scale = scale_att$`scaled:scale`
+    x_scale = scale_att$`scaled:scale`,
+    temp_files = temp_files
   )
 
   # create the core input
@@ -206,9 +210,9 @@ run_modern <- function(modern_elevation = NULL,
 InternalRunOneChain <- function(chainNum, jags_data, jags_pars, n.burnin,
                                 n.iter, n.thin) {
   set.seed.chain <- chainNum * 209846
-  jags.dir <- file.path(getwd(), "temp.JAGSobjects/")
+  jags.dir <- tempdir()
   set.seed(set.seed.chain)
-  temp <- rnorm(1)
+  temp <- stats::rnorm(1)
 
   # The model for the modern data
   modernmodel <- "
@@ -267,19 +271,20 @@ InternalRunOneChain <- function(chainNum, jags_data, jags_pars, n.burnin,
   )
 
   mod_upd <- mod
-  save(mod_upd, file = file.path(getwd(), "temp.JAGSobjects", paste0(
-    "jags_mod",
-    chainNum, ".Rdata"
-  )))
+  temp.jags.file <- tempfile(paste0("jags_mod", chainNum), jags.dir, ".Rdata")
+  save(mod_upd, file = temp.jags.file)
 
   cat(paste("Hooraah, Chain", chainNum, "has finished!"), "\n")
 
-  return(invisible())
+  return(list(file = temp.jags.file))
 }
 
 #-----------------------------------------------------
 internal_get_core_input <- function(ChainNums, jags_data, scale_x = FALSE) {
-  mcmc.array <- ConstructMCMCArray(ChainIDs = ChainNums)
+  mcmc.array <- ConstructMCMCArray(
+    ChainIDs = ChainNums,
+    temp_files = jags_data$temp_files
+  )
 
   n_samps <- dim(mcmc.array)[1]
 
@@ -329,10 +334,10 @@ internal_get_core_input <- function(ChainNums, jags_data, scale_x = FALSE) {
   }
 
   delta0.hj <- apply(delta.hj_samps, 2:3, mean)
-  delta0_sd <- apply((apply(delta.hj_samps, 2:3, sd)), 2, median)
+  delta0_sd <- apply((apply(delta.hj_samps, 2:3, stats::sd)), 2, stats::median)
 
   beta0.j <- apply(beta.j_samps, 2, mean)
-  beta0_sd <- apply(beta.j_samps, 2, sd) %>% median()
+  beta0_sd <- apply(beta.j_samps, 2, stats::sd) %>% stats::median()
 
   sig0_z <- apply(sigma.z_samps, 2, mean)
 

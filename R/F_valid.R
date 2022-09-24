@@ -26,15 +26,14 @@ run_valid <- function(modern_elevation = NULL,
                       modern.iter = 40000,
                       modern.burnin = 10000,
                       modern.thin = 15,
-                      core.iter=15000,
-                      core.burnin=1000,
-                      core.thin=7,
-                      scale_x = FALSE)
-{
+                      core.iter = 15000,
+                      core.burnin = 1000,
+                      core.thin = 7,
+                      scale_x = FALSE) {
 
   # read in the modern data
   if (is.null(modern_species)) {
-     modern_species <- BTFr::NJ_modern_species
+    modern_species <- BTFr::NJ_modern_species
   }
 
   # read in the elevation data
@@ -42,47 +41,46 @@ run_valid <- function(modern_elevation = NULL,
     elevation_dat <- BTFr::NJ_modern_elevation
   }
 
-  valid_SWLI <- tibble(Depth = numeric(),
-                       SWLI = numeric(),
-                       sigma = numeric(),
-                       lower = numeric(),
-                       True = numeric())
-  for(f in 1:n_folds)
+  valid_SWLI <- tibble(
+    Depth = numeric(),
+    SWLI = numeric(),
+    sigma = numeric(),
+    lower = numeric(),
+    True = numeric()
+  )
+  for (f in 1:n_folds)
   {
     modern_mod <- BTFr::run_modern(modern_elevation,
-                             modern_species,
-                             validation.run = TRUE,
-                             fold = f,
-                             dx = dx,
-                             n.iter = modern.iter,
-                             n.burnin = modern.burnin,
-                             n.thin = modern.thin,
-                             scale_x = scale_x)
+      modern_species,
+      validation.run = TRUE,
+      fold = f,
+      dx = dx,
+      n.iter = modern.iter,
+      n.burnin = modern.burnin,
+      n.thin = modern.thin,
+      scale_x = scale_x
+    )
 
 
     core_mod <- BTFr::run_core(modern_mod,
-                              core_species = modern_mod$data$y_test,
-                              validation.run = TRUE,
-                              use_uniform_prior = use_uniform_prior,
-                              n.iter = core.iter,
-                              n.burnin = core.burnin,
-                              n.thin = core.thin)
+      core_species = modern_mod$data$y_test,
+      validation.run = TRUE,
+      use_uniform_prior = use_uniform_prior,
+      n.iter = core.iter,
+      n.burnin = core.burnin,
+      n.thin = core.thin
+    )
 
-  SWLI_res <- as_tibble(core_mod$SWLI)
+    SWLI_res <- as_tibble(core_mod$SWLI)
 
-  if(modern_mod$scale_x)
-  {
-  SWLI_res$True <- modern_mod$data$x_test$value*modern_mod$x_scale + modern_mod$x_center
-  }
-  if(!modern_mod$scale_x)
-  {
-    SWLI_res$True <- modern_mod$data$x_test$value*100
-  }
-  valid_SWLI <- full_join(valid_SWLI,SWLI_res)
-
-
+    if (modern_mod$scale_x) {
+      SWLI_res$True <- modern_mod$data$x_test$value * modern_mod$x_scale + modern_mod$x_center
+    }
+    if (!modern_mod$scale_x) {
+      SWLI_res$True <- modern_mod$data$x_test$value * 100
+    }
+    valid_SWLI <- full_join(valid_SWLI, SWLI_res)
   }
 
   return(valid_SWLI)
-
 }

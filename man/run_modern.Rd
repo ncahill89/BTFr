@@ -7,14 +7,14 @@
 run_modern(
   modern_elevation = NULL,
   modern_species = NULL,
+  scale_x = FALSE,
+  sigma_z_priors = NULL,
   dx = 0.1,
   ChainNums = seq(1, 3),
   n.iter = 40000,
   n.burnin = 10000,
   n.thin = 15,
   validation.run = FALSE,
-  sigma_z_priors = NULL,
-  scale_x = FALSE,
   fold = 1
 )
 }
@@ -23,7 +23,11 @@ run_modern(
 
 \item{modern_species}{A dataframe of modern counts (to be sorted with \code{\link{sort_modern}})}
 
-\item{dx}{The elevation interval for spacing the spline knots. Defaults to 0.2.}
+\item{scale_x}{Set to TRUE to scale elevation data to have mean 0 and sd 1}
+
+\item{sigma_z_priors}{priors for foram variability (if available)}
+
+\item{dx}{The elevation interval for spacing the spline knots. Defaults to 0.2}
 
 \item{ChainNums}{The number of MCMC chains to run}
 
@@ -33,13 +37,9 @@ run_modern(
 
 \item{n.thin}{The number of thinning}
 
-\item{validation.run}{Set to TRUE if running a validation}
+\item{validation.run}{Defaults to FALSE. Set to TRUE if running a validation}
 
-\item{sigma_z_priors}{provide priors for foram variability if available}
-
-\item{scale_x}{Set to TRUE to scale elevation data to have mean 0 and sd 1}
-
-\item{fold}{Fold number for CV}
+\item{fold}{Fold number for cross validation (CV)}
 }
 \value{
 Nothing is returned, the relevant data will be saved.
@@ -48,12 +48,14 @@ Nothing is returned, the relevant data will be saved.
 Run the modern (calibration) model
 }
 \examples{
-\donttest{test_modern_mod <- run_modern(
+\donttest{
+test_modern_mod <- run_modern(
   modern_elevation = NJ_modern_elevation,
   modern_species = NJ_modern_species,
   n.iter = 10,
   n.burnin = 1,
   n.thin = 1
-)}
+)
+}
 
 }

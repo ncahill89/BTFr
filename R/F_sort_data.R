@@ -32,7 +32,7 @@ sort_modern <- function(modern_dat) {
 
 #' Sort core dataset to be compatible with the sorted modern data
 #'
-#' @param core_dat A data object containing core species counts
+#' @param core_dat A core data object containing core species counts
 #' @param species_names A list of species names that have been returned from \code{\link{sort_modern}}
 #'
 #' @return Returns the sorted core data where the species columns are compatible with the modern data that has been returned from \code{\link{sort_modern}}
