@@ -3,7 +3,7 @@
 #' @param modern_mod An object of class \code{BTFr} from \code{\link{run_modern}}
 #' @param species_select a vector of species names for which you want to create response curves
 #'
-#' @return Response curve data files (empirical and model) and species response curve plots
+#' @return Response curve data files (empirical data and model-based estimates) and species response curve plots
 #' @export
 #' @import ggplot2 magrittr
 #' @importFrom tidyr 'gather'
