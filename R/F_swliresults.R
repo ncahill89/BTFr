@@ -2,7 +2,7 @@
 #'
 #' @param obj An object of class \code{BTFr} from \code{\link{run_core}}
 #'
-#' @return Table of results and plot
+#' @return Table of results and the corresponding plot
 #' @export
 #' @importFrom dplyr "select"
 #' @examples

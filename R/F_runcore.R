@@ -10,7 +10,7 @@
 #' @param validation.run Set to TRUE if running validation
 #' @param use_uniform_prior change prior on elevation to be uniform
 #'
-#' @return Output will be saved to \code{output.dir}
+#' @return a list of objects including SWLI and an mcmc array with posterior samples
 #' @export
 #' @import R2jags rjags
 #' @importFrom dplyr "select" "ends_with"

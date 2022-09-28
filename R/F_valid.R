@@ -13,7 +13,7 @@
 #' @param core.thin The number of thinning for the core model
 #' @param scale_x Set to TRUE to scale elevation data to have mean 0 and sd 1
 #'
-#' @return A table of validation results
+#' @return A tibble of validation results
 #' @export
 #' @importFrom dplyr "full_join"
 #' @import tibble

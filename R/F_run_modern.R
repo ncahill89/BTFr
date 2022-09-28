@@ -13,7 +13,7 @@
 #' @param validation.run Defaults to FALSE. Set to TRUE if running a validation
 #' @param fold Fold number for cross validation (CV)
 #'
-#' @return Nothing is returned, the relevant data will be saved.
+#' @return a list of objects including data, parameter values and scaling information
 #' @export
 #'
 #' @examples
