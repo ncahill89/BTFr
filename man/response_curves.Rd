@@ -12,7 +12,7 @@ response_curves(modern_mod, species_select = NULL)
 \item{species_select}{a vector of species names for which you want to create response curves}
 }
 \value{
-Response curve data files (empirical and model) and species response curve plots
+Response curve data files (empirical data and model-based estimates) and species response curve plots
 }
 \description{
 Create Species Response Curves

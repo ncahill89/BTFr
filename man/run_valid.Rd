@@ -45,7 +45,7 @@ run_valid(
 \item{scale_x}{Set to TRUE to scale elevation data to have mean 0 and sd 1}
 }
 \value{
-A table of validation results
+A tibble of validation results
 }
 \description{
 Carry out a validation

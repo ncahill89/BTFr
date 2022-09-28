@@ -10,7 +10,7 @@ swli_results(obj)
 \item{obj}{An object of class \code{BTFr} from \code{\link{run_core}}}
 }
 \value{
-Table of results and plot
+Table of results and the corresponding plot
 }
 \description{
 Get SWLI estimates and uncertainty

@@ -42,7 +42,7 @@ run_modern(
 \item{fold}{Fold number for cross validation (CV)}
 }
 \value{
-Nothing is returned, the relevant data will be saved.
+a list of objects including data, parameter values and scaling information
 }
 \description{
 Run the modern (calibration) model

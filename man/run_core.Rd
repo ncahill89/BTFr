@@ -36,7 +36,7 @@ run_core(
 \item{use_uniform_prior}{change prior on elevation to be uniform}
 }
 \value{
-Output will be saved to \code{output.dir}
+a list of objects including SWLI and an mcmc array with posterior samples
 }
 \description{
 Run the core model
