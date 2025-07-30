@@ -12,13 +12,15 @@
 #'   modern_species = NJ_modern_species,
 #'   n.iter = 10,
 #'   n.burnin = 1,
-#'   n.thin = 1
+#'   n.thin = 1,
+#'   parallel = FALSE
 #' )
 #' test_core_mod <- run_core(test_modern_mod,
 #'   core_species = NJ_core_species,
 #'   n.iter = 10,
 #'   n.burnin = 1,
-#'   n.thin = 1
+#'   n.thin = 1,
+#'   parallel = FALSE
 #' )
 #' swli_results(test_core_mod)
 #' }

@@ -12,18 +12,34 @@
 #' @param n.thin The number of thinning
 #' @param validation.run Defaults to FALSE. Set to TRUE if running a validation
 #' @param fold Fold number for cross validation (CV)
+#' @param parallel Logical. Whether to run MCMC chains in parallel. Default is TRUE
+#' @param n_cores Number of CPU cores to use for parallel processing. If NULL, uses all available cores minus 1
 #'
 #' @return a list of objects including data, parameter values and scaling information
 #' @export
+#' @importFrom parallel "detectCores" "mclapply" "parLapply" "makeCluster" "stopCluster"
 #'
 #' @examples
 #' \donttest{
+#' # Run with parallel processing disabled for examples
 #' test_modern_mod <- run_modern(
 #'   modern_elevation = NJ_modern_elevation,
 #'   modern_species = NJ_modern_species,
 #'   n.iter = 10,
 #'   n.burnin = 1,
-#'   n.thin = 1
+#'   n.thin = 1,
+#'   parallel = FALSE
+#' )
+#'
+#' # Run with parallel processing enabled (1 core for safety)
+#' test_modern_mod_par <- run_modern(
+#'   modern_elevation = NJ_modern_elevation,
+#'   modern_species = NJ_modern_species,
+#'   n.iter = 10,
+#'   n.burnin = 1,
+#'   n.thin = 1,
+#'   parallel = TRUE,
+#'   n_cores = 1
 #' )
 #' }
 #'
@@ -37,7 +53,9 @@ run_modern <- function(modern_elevation = NULL,
                        n.burnin = 10000,
                        n.thin = 15,
                        validation.run = FALSE,
-                       fold = 1) {
+                       fold = 1,
+                       parallel = TRUE,
+                       n_cores = NULL) {
   # read in the modern data
   if (!is.null(modern_species)) {
     modern_dat <- modern_species
@@ -145,16 +163,65 @@ run_modern <- function(modern_elevation = NULL,
 
   # run the model
   temp_files <- rep(NA, length(ChainNums))
-  for (chainNum in ChainNums) {
-    cat(paste("Start chain ID ", chainNum), "\n")
 
-    run <- InternalRunOneChain(
-      chainNum = chainNum, jags_data = data,
-      jags_pars = pars, n.burnin = n.burnin, n.iter = n.iter,
-      n.thin = n.thin
-    )
+  if (parallel && length(ChainNums) > 1) {
+    # Determine number of cores to use
+    if (is.null(n_cores)) {
+      n_cores <- max(1, parallel::detectCores() - 1)
+    }
+    n_cores <- min(n_cores, length(ChainNums))
 
-    temp_files[chainNum] <- run$file
+    cat(paste("Running", length(ChainNums), "chains in parallel using", n_cores, "cores"), "\n")
+
+    # Create a function for parallel execution
+    run_chain_parallel <- function(chainNum) {
+      cat(paste("Start chain ID ", chainNum), "\n")
+      run <- InternalRunOneChain(
+        chainNum = chainNum, jags_data = data,
+        jags_pars = pars, n.burnin = n.burnin, n.iter = n.iter,
+        n.thin = n.thin
+      )
+      return(list(chainNum = chainNum, file = run$file))
+    }
+
+    # Run chains in parallel based on platform
+    if (.Platform$OS.type == "unix") {
+      # Unix-like systems (Linux, macOS)
+      results <- parallel::mclapply(ChainNums, run_chain_parallel, mc.cores = n_cores)
+    } else {
+      # Windows
+      cl <- parallel::makeCluster(n_cores)
+      # Export necessary objects to cluster
+      parallel::clusterExport(cl, c(
+        "InternalRunOneChain", "data", "pars", "n.burnin",
+        "n.iter", "n.thin"
+      ), envir = environment())
+      # Load required packages on cluster nodes
+      parallel::clusterEvalQ(cl, {
+        requireNamespace("R2jags", quietly = TRUE)
+        requireNamespace("rjags", quietly = TRUE)
+      })
+      results <- parallel::parLapply(cl, ChainNums, run_chain_parallel)
+      parallel::stopCluster(cl)
+    }
+
+    # Extract results
+    for (result in results) {
+      temp_files[result$chainNum] <- result$file
+    }
+  } else {
+    # Sequential execution (original behavior)
+    for (chainNum in ChainNums) {
+      cat(paste("Start chain ID ", chainNum), "\n")
+
+      run <- InternalRunOneChain(
+        chainNum = chainNum, jags_data = data,
+        jags_pars = pars, n.burnin = n.burnin, n.iter = n.iter,
+        n.thin = n.thin
+      )
+
+      temp_files[chainNum] <- run$file
+    }
   }
 
   # Get model output needed for the core run

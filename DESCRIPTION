@@ -1,14 +1,14 @@
 Package: BTFr
 Type: Package
 Title: Run the Bayesian Transfer Function
-Version: 0.1.0
+Version: 0.2.0
 Author: Niamh Cahill
 Maintainer: The package maintainer <niamh.cahill@mu.ie>
 Description: This package was developed to run the Bayesian Transfer function to reconstruct sea level using salt marsh proxies.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.2
 Depends: 
     R (>= 2.10)
 Imports: 
@@ -19,5 +19,6 @@ Imports:
     rjags,
     magrittr,
     ggplot2,
-    tidyr
+    tidyr,
+    parallel
 URL: https://ncahill89.github.io/BTFr/

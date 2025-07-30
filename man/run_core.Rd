@@ -13,7 +13,9 @@ run_core(
   n.burnin = 1000,
   n.thin = 7,
   validation.run = FALSE,
-  use_uniform_prior = FALSE
+  use_uniform_prior = FALSE,
+  parallel = TRUE,
+  n_cores = NULL
 )
 }
 \arguments{
@@ -34,6 +36,10 @@ run_core(
 \item{validation.run}{Set to TRUE if running validation}
 
 \item{use_uniform_prior}{change prior on elevation to be uniform}
+
+\item{parallel}{Logical. Whether to run MCMC chains in parallel. Default is TRUE}
+
+\item{n_cores}{Number of CPU cores to use for parallel processing. If NULL, uses all available cores minus 1}
 }
 \value{
 a list of objects including SWLI and an mcmc array with posterior samples
@@ -42,14 +48,32 @@ a list of objects including SWLI and an mcmc array with posterior samples
 Run the core model
 }
 \examples{
-\donttest{test_modern_mod <- run_modern(modern_elevation = NJ_modern_elevation,
-                              modern_species = NJ_modern_species,
-                              n.iter = 10,
-                              n.burnin = 1,
-                              n.thin = 1)
+\donttest{
+test_modern_mod <- run_modern(
+  modern_elevation = NJ_modern_elevation,
+  modern_species = NJ_modern_species,
+  n.iter = 10,
+  n.burnin = 1,
+  n.thin = 1,
+  parallel = FALSE
+)
+# Run with parallel processing disabled for examples
 test_core_mod <- run_core(test_modern_mod,
-                          core_species = NJ_core_species,
-                          n.iter = 10,
-                          n.burnin = 1,
-                          n.thin = 1)}
+  core_species = NJ_core_species,
+  n.iter = 10,
+  n.burnin = 1,
+  n.thin = 1,
+  parallel = FALSE
+)
+
+# Run with parallel processing enabled (1 core for safety)
+test_core_mod_par <- run_core(test_modern_mod,
+  core_species = NJ_core_species,
+  n.iter = 10,
+  n.burnin = 1,
+  n.thin = 1,
+  parallel = TRUE,
+  n_cores = 1
+)
+}
 }

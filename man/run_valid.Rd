@@ -16,7 +16,9 @@ run_valid(
   core.iter = 15000,
   core.burnin = 1000,
   core.thin = 7,
-  scale_x = FALSE
+  scale_x = FALSE,
+  parallel = TRUE,
+  n_cores = NULL
 )
 }
 \arguments{
@@ -43,6 +45,10 @@ run_valid(
 \item{core.thin}{The number of thinning for the core model}
 
 \item{scale_x}{Set to TRUE to scale elevation data to have mean 0 and sd 1}
+
+\item{parallel}{Logical. Whether to run CV folds in parallel. Default is TRUE}
+
+\item{n_cores}{Number of CPU cores to use for parallel processing. If NULL, uses all available cores minus 1}
 }
 \value{
 A tibble of validation results
