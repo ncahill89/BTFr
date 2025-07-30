@@ -7,7 +7,8 @@
 #' @return Response curve data files (empirical data and model-based estimates) and species response curve plots
 #' @export
 #' @import ggplot2 magrittr
-#' @importFrom tidyr 'gather'
+#' @importFrom tidyr 'gather' 'pivot_longer'
+#' @importFrom dplyr 'filter'
 #' @examples
 #' \donttest{
 #' test_modern_mod <- run_modern(
@@ -15,7 +16,8 @@
 #'   modern_species = NJ_modern_species,
 #'   n.iter = 10,
 #'   n.burnin = 1,
-#'   n.thin = 1
+#'   n.thin = 1,
+#'   parallel = FALSE
 #' )
 #' response_curves(test_modern_mod)
 #' }
@@ -51,18 +53,14 @@ response_curves <- function(modern_mod, species_select = NULL, species_order = N
   empirical_dat <- data.frame(SWLI, Pmat)
   colnames(empirical_dat) <- c("SWLI", species_names)
 
-  library(dplyr)
-  library(tidyr)
-  library(ggplot2)
-
   # Pivot to long format
   empirical_data_long <- empirical_dat %>%
-    pivot_longer(cols = -SWLI, names_to = "species", values_to = "proportion") %>%
-    filter(species %in% species_select)
+    tidyr::pivot_longer(cols = -SWLI, names_to = "species", values_to = "proportion") %>%
+    dplyr::filter(species %in% species_select)
 
   # Filter model estimates
   src_dat <- modern_mod$src_dat %>%
-    filter(species %in% species_select)
+    dplyr::filter(species %in% species_select)
 
   # Apply custom species order if provided
   if (!is.null(species_order)) {
@@ -74,9 +72,11 @@ response_curves <- function(modern_mod, species_select = NULL, species_order = N
   p <- ggplot(data = empirical_data_long, aes(x = SWLI, y = proportion)) +
     geom_point(aes(color = "Observed"), alpha = 0.3, size = 1.5) +
     geom_line(data = src_dat, aes(x = SWLI, y = proportion, color = "Model"), size = 1) +
-    geom_ribbon(data = src_dat,
-                aes(x = SWLI, ymin = proportion_lwr, ymax = proportion_upr),
-                fill = "grey70", alpha = 0.4, inherit.aes = FALSE) +
+    geom_ribbon(
+      data = src_dat,
+      aes(x = SWLI, ymin = proportion_lwr, ymax = proportion_upr),
+      fill = "grey70", alpha = 0.4, inherit.aes = FALSE
+    ) +
     facet_wrap(~species, scales = "free_y") +
     scale_color_manual(
       name = "",

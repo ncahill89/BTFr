@@ -5,3 +5,5 @@
 ^docs$
 ^pkgdown$
 ^\.github$
+^PARALLEL_OPTIMIZATION\.md$
+^\.DS_Store$
