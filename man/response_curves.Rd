@@ -26,7 +26,8 @@ test_modern_mod <- run_modern(
   modern_species = NJ_modern_species,
   n.iter = 10,
   n.burnin = 1,
-  n.thin = 1
+  n.thin = 1,
+  parallel = FALSE
 )
 response_curves(test_modern_mod)
 }
