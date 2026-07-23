@@ -46,6 +46,11 @@ run_valid <- function(modern_elevation = NULL,
     SWLI = numeric(),
     sigma = numeric(),
     lower = numeric(),
+    upper = numeric(),
+    lower_95 = numeric(),
+    upper_95 = numeric(),
+    lower_80 = numeric(),
+    upper_80 = numeric(),
     True = numeric()
   )
   for (f in 1:n_folds)
