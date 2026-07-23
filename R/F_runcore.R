@@ -332,9 +332,13 @@ internal_get_core_output <- function(ChainNums, jags_data, scale_x = FALSE,temp_
   SWLI_SD<-apply(x0.samps,2,stats::sd)
   lower<- SWLI-2*SWLI_SD
   upper<- SWLI+2*SWLI_SD
+  lower_95<- apply(x0.samps,2,quantile, probs = 0.025)
+  upper_95<- apply(x0.samps,2,quantile, probs = 0.975)
+  lower_80<- apply(x0.samps,2,quantile, probs = 0.1)
+  upper_80<- apply(x0.samps,2,quantile, probs = 0.9)
 
   sigma<-(upper-lower)/4
-  SWLI_data<-cbind(Depth,SWLI,sigma,lower,upper)
+  SWLI_data<-cbind(Depth,SWLI,sigma,lower,upper,lower_95,upper_95,lower_80,upper_80)
 
   return(list(SWLI = SWLI_data,x0.samps=x0.samps))
 }
